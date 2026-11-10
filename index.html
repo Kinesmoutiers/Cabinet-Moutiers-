@@ -278,7 +278,6 @@ td{padding:8px;border-bottom:1px solid #eef1f5;vertical-align:top}
       <a href="#calendrier" data-v="calendrier">📅 Calendrier</a>
       <a href="#exercices" data-v="exercices">🏋️ Exercices</a>
       <a href="#suivi" data-v="suivi">📈 Suivi</a>
-      <a href="#patient" data-v="patient">📱 Vue patient</a>
     </nav>
     <div class="sync" id="sync"><b></b>Connexion…</div>
   </header>
@@ -595,10 +594,11 @@ const initials = p => ((p.prenom || '')[0] || '') + ((p.nom || '')[0] || '');
 const fullName = p => (p.prenom || '') + ' ' + (p.nom || '');
 
 function alertFor(pid) {
-  const qs = qOf(pid); if (!qs.length) return null;
-  const last = qs[qs.length - 1], prev = qs[qs.length - 2];
-  if (last.douleur >= 6 || last.courbatures >= 7) return 'rouge';
-  if (prev && last.douleur - prev.douleur >= 2) return 'orange';
+  const p = P(pid); if (p && p.archive) return null;
+  const qs = sesOf(pid).filter(s => s.douleurPatient != null).sort((a, b) => a.date.localeCompare(b.date)); if (!qs.length) return null;
+  const last = qs[qs.length - 1].douleurPatient, prev = qs.length > 1 ? qs[qs.length - 2].douleurPatient : null;
+  if (last >= 6) return 'rouge';
+  if (prev != null && last - prev >= 2) return 'orange';
   return null;
 }
 function pendingQuestionnaire(pid) {
@@ -635,31 +635,33 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal()
 /* ---------- Rendu global ---------- */
 function render() {
   $$('#tabs a').forEach(a => a.classList.toggle('on', a.dataset.v === UI.view));
-  if (!UI.pid || !P(UI.pid)) UI.pid = S.patients[0]?.id || null;
+  const vis = S.patients.filter(p => !!p.archive === !!UI.showArch).sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
+  if (!UI.pid || !P(UI.pid) || !!P(UI.pid).archive !== !!UI.showArch) UI.pid = vis[0]?.id || null;
   renderSide();
   const m = $('#main');
   if (UI.view === 'exercices') return renderExercices(m);
   if (!S.patients.length) return renderEmpty(m);
-  ({ calendrier: renderCal, suivi: renderSuivi, patient: renderPatient }[UI.view] || renderCal)(m);
+  if (!UI.pid) { m.innerHTML = `<div class="empty"><h2>${UI.showArch ? 'Aucun patient archivé' : 'Aucun patient actif'}</h2><p>${UI.showArch ? 'Les patients archivés apparaîtront ici.' : 'Tous vos patients sont archivés. Ajoutez un patient ou consultez les archivés (en bas à gauche).'}</p></div>`; return; }
+  ({ calendrier: renderCal, suivi: renderSuivi }[UI.view] || renderCal)(m);
 }
 function renderSide() {
   const q = UI.pq.toLowerCase();
-  const list = S.patients.filter(p => (fullName(p) + ' ' + (p.pathologie || '')).toLowerCase().includes(q))
+  const list = S.patients.filter(p => !!p.archive === !!UI.showArch && (fullName(p) + ' ' + (p.pathologie || '')).toLowerCase().includes(q))
     .sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
   $('#plist').innerHTML = list.map(p => {
     const a = alertFor(p.id), cy = cycleAt(p.id, today());
-    return `<div class="pitem ${p.id === UI.pid ? 'on' : ''}" data-p="${p.id}">
+    return `<div class="pitem ${p.id === UI.pid ? 'on' : ''}" data-p="${p.id}" ${p.archive ? 'style="opacity:.6"' : ''}>
       <div class="av" style="background:${p.couleur}">${esc(initials(p).toUpperCase())}</div>
-      <div><div class="nm">${esc(fullName(p))}</div><div class="sb">${esc(p.pathologie || '—')}</div></div>
-      ${a ? `<span class="dot ${a}" title="${a === 'rouge' ? 'Douleur ou courbatures élevées' : 'Douleur en hausse'}"></span>` : ''}
+      <div><div class="nm">${esc(fullName(p))}</div><div class="sb">${p.archive ? '🗄 Archivé' + (p.archiveLe ? ' le ' + fdate(p.archiveLe) : '') + ' · ' : ''}${esc(p.pathologie || '—')}</div></div>
+      ${a ? `<span class="dot ${a}" title="${a === 'rouge' ? 'Douleur élevée à la dernière séance' : 'Douleur en hausse'}"></span>` : ''}
     </div>`;
-  }).join('') || `<div class="empty" style="padding:24px 10px">Aucun patient</div>`;
+  }).join('') || `<div class="empty" style="padding:24px 10px">${UI.showArch ? 'Aucun patient archivé' : 'Aucun patient'}</div>`;
   $$('#plist .pitem').forEach(el => el.onclick = () => { UI.pid = el.dataset.p; render(); });
   const al = S.patients.filter(p => alertFor(p.id)).length;
-  $('#sidef').innerHTML = `${S.patients.length} patient${S.patients.length > 1 ? 's' : ''}${al ? ` · <span style="color:var(--bad);font-weight:600">${al} alerte${al > 1 ? 's' : ''}</span>` : ''}
-    ${S.patients.length && UI.pid ? ` · <a href="#" id="editP" style="color:var(--pri)">Fiche patient</a>` : ''}<br><a href="#" id="bkp" style="color:var(--pri)">💾 Sauvegarde</a> · <a href="#" id="ret" style="color:var(--pri)">📩 Retours patients</a> · <a href="#" id="reg" style="color:var(--pri)">⚙️ Réglages</a>`;
-  $('#ret').onclick = e => { e.preventDefault(); retourModal(); };
-  $('#reg').onclick = e => { e.preventDefault(); reglagesModal(); };
+  const nAct = S.patients.filter(x => !x.archive).length;
+  $('#sidef').innerHTML = `${UI.showArch ? list.length + ' archivé' + (list.length > 1 ? 's' : '') : nAct + ' patient' + (nAct > 1 ? 's' : '') + ' actif' + (nAct > 1 ? 's' : '')}${al ? ` · <span style="color:var(--bad);font-weight:600">${al} alerte${al > 1 ? 's' : ''}</span>` : ''}
+    ${S.patients.length && UI.pid ? ` · <a href="#" id="editP" style="color:var(--pri)">Fiche patient</a>` : ''}<br><a href="#" id="bkp" style="color:var(--pri)">💾 Sauvegarde</a> · <a href="#" id="arch" style="color:var(--pri)">${UI.showArch ? '← Patients actifs' : '🗄 Archivés (' + S.patients.filter(x => x.archive).length + ')'}</a>`;
+  $('#arch').onclick = e => { e.preventDefault(); UI.showArch = !UI.showArch; UI.pid = null; render(); };
   $('#bkp').onclick = e => { e.preventDefault(); backupModal(); };
   const ep = $('#editP'); if (ep) ep.onclick = e => { e.preventDefault(); patientModal(P(UI.pid)); };
 }
@@ -674,8 +676,10 @@ function patientHeader(extra = '') {
   return `<div class="ph"><div class="av" style="background:${p.couleur};width:42px;height:42px;font-size:15px">${esc(initials(p).toUpperCase())}</div>
     <div><h1>${esc(fullName(p))}</h1><div class="meta">${esc(p.pathologie || '')}${p.objectif ? ' · Objectif : ' + esc(p.objectif) : ''}</div></div>
     ${cy && UI.view === 'calendrier' ? `<span class="chip" style="background:${cy.couleur}22;color:${cy.couleur}">● ${esc(cy.nom)} · jusqu'au ${fdate(cy.fin)}</span>` : ''}
-    <div class="sp"></div>${extra}</div>`;
+    <div class="sp"></div>${extra}</div>${p.archive ? `<div class="qbox" style="margin:-4px 0 12px;background:#fff8ec;border-color:#f3cf8f">🗄 <b>Patient archivé</b>${p.archiveLe ? ' le ' + fdateL(p.archiveLe) : ''} · son dossier reste consultable <button class="btn sm" id="unarch">Réactiver le patient</button></div>` : ''}`;
 }
+function setArchive(p, on) { p.archive = on; p.archiveLe = on ? today() : null; UI.showArch = on; UI.pid = p.id; save(); render(); toast(on ? `${p.prenom || 'Patient'} archivé` : `${p.prenom || 'Patient'} réactivé`); }
+document.addEventListener('click', e => { if (e.target && e.target.id === 'unarch') { const p = P(UI.pid); if (p) setArchive(p, false); } });
 
 /* ---------- Calendrier ---------- */
 function renderCal(m) {
@@ -702,32 +706,28 @@ function renderCal(m) {
       const day = addDays(ws, d);
       const cy = cycleAt(p.id, day);
       const ses = sesOf(p.id).filter(s => s.date === day);
-      const qd = S.questionnaires.filter(q => q.patientId === p.id && q.date === day);
-      ses.forEach(s => { nb++; if (s.statut === 'faite') nbF++; dur += +s.duree || 0; });
-      qs.push(...qd);
+      const qd = [];
+      ses.forEach(s => { nb++; if (s.statut === 'faite') nbF++; dur += +s.duree || 0; if (s.douleurPatient != null) qs.push(s.douleurPatient); });
       const showName = cy && (day === cy.debut || d === 0);
       h += `<div class="day ${day === t ? 'today' : ''} ${day < t ? 'past' : ''}" data-d="${day}">
         <div class="dnum"><span>${parse(day).getDate()}${parse(day).getDate() === 1 || (w === 0 && d === 0) ? ' ' + MOIS[parse(day).getMonth()] : ''}</span><button class="add" data-add="${day}" title="Ajouter une séance">+</button></div>
         <div class="cyc ${cy ? '' : 'none'}" ${cy ? `style="background:${cy.couleur}" data-cy="${cy.id}" title="${esc(cy.nom)} – ${esc(cy.objectif || '')}"` : ''}>${showName ? esc(cy.nom) : ''}</div>
         ${rv.filter(r => r.date === day).map(r => { const T = RDV_T[r.type] || RDV_T.autre; return `<div class="evt" data-r="${r.id}" style="background:${T.c}" title="${esc(T.l)}${r.notes ? ' – ' + esc(r.notes) : ''}">${T.i} <span>${esc(r.titre || T.l)}${r.heure ? ' · ' + esc(r.heure) : ''}</span></div>`; }).join('')}
         ${ses.map(s => sesCard(s)).join('')}
-        ${qd.map(q => `<div class="q lv${lvl(Math.max(q.douleur, q.courbatures))}" data-q="${q.id}" title="Questionnaire J+1">📝 Douleur ${q.douleur} · Courb. ${q.courbatures}</div>`).join('')}
-        ${ses.filter(s => s.date < t && s.statut !== 'manquee' && !qForSes(s.id) && addDays(s.date, 1) <= t).map(s => `<div class="q wait" data-qs="${s.id}">⏳ Questionnaire J+1 en attente</div>`).join('')}
       </div>`;
     }
-    const avgD = qs.length ? (qs.reduce((a, q) => a + q.douleur, 0) / qs.length).toFixed(1) : '–';
-    const avgC = qs.length ? (qs.reduce((a, q) => a + q.courbatures, 0) / qs.length).toFixed(1) : '–';
+    const avgD = qs.length ? (qs.reduce((a, v) => a + v, 0) / qs.length).toFixed(1) : '–';
     const wc = cycleAt(p.id, addDays(ws, 3));
     h += `<div class="wk">
       <div class="l">${wc ? `<span style="color:${wc.couleur};font-weight:600">${esc(wc.nom)}</span>` : 'Hors cycle'}</div>
       <div><b>${nbF}/${nb}</b> <span class="l">séances faites</span></div>
       <div class="bar"><i style="width:${nb ? nbF / nb * 100 : 0}%"></i></div>
       <div><b>${Math.floor(dur / 60) ? Math.floor(dur / 60) + ' h ' : ''}${dur % 60} min</b> <span class="l">planifiées</span></div>
-      <div class="l">Douleur moy. <b class="${avgD !== '–' ? '' : ''}">${avgD}</b> · Courb. <b>${avgC}</b></div>
+      <div class="l">Douleur moy. <b>${avgD}</b> /10</div>
     </div></div>`;
   }
   h += `</div><div class="legend"><span><i style="background:var(--cab)"></i>Séance cabinet</span><span><i style="background:var(--dom)"></i>Auto-exercice prescrit</span><span><i style="background:var(--bil)"></i>Bilan / test</span>
-    <span>📌 Rendez-vous / test</span><span>📝 Réponse du patient (vert &lt; 4 · orange 4–5 · rouge ≥ 6)</span><span>Glissez-déposez une séance pour la déplacer</span></div>`;
+    <span>📌 Rendez-vous / test</span><span>Douleur : vert &lt; 4 · orange 4–5 · rouge ≥ 6</span><span>Glissez-déposez une séance pour la déplacer</span></div>`;
   m.innerHTML = h;
   $('#prev').onclick = () => { UI.start = addDays(UI.start, -7 * Math.max(1, Math.floor(UI.weeks / 2))); render(); };
   $('#next').onclick = () => { UI.start = addDays(UI.start, 7 * Math.max(1, Math.floor(UI.weeks / 2))); render(); };
@@ -744,8 +744,6 @@ function renderCal(m) {
     el.onclick = () => sessionModal(S.seances.find(s => s.id === el.dataset.s));
     el.ondragstart = e => { e.dataTransfer.setData('text/plain', el.dataset.s); e.dataTransfer.effectAllowed = 'move'; };
   });
-  $$('[data-q]', m).forEach(el => el.onclick = () => questionnaireModal(S.questionnaires.find(q => q.id === el.dataset.q)));
-  $$('[data-qs]', m).forEach(el => el.onclick = () => questionnaireModal(null, S.seances.find(s => s.id === el.dataset.qs)));
   $$('[data-cy]', m).forEach(el => el.onclick = () => cycleModal(S.cycles.find(c => c.id === el.dataset.cy)));
   $$('.day', m).forEach(d => {
     d.onclick = e => { if (e.target.closest('.ses,.q,.evt,.cyc[data-cy]')) return; sessionModal(null, d.dataset.d); };
@@ -791,6 +789,7 @@ function sessionModal(s, date, draft) {
       <div class="f"><label>Durée (min)</label><input id="sM" type="number" min="0" value="${esc(d.duree)}"></div>
       <div class="f"><label>Statut</label><select id="sSt"><option value="prevue">Prévue</option><option value="faite">Réalisée</option><option value="manquee">Non réalisée</option></select></div>
       <div class="f"><label>RPE (1–10)</label><input id="sR" type="number" min="1" max="10" value="${esc(d.rpe)}"></div>
+      <div class="f"><label>Douleur (0–10)</label><input id="sDl" type="number" min="0" max="10" value="${d.douleurPatient ?? ''}"></div>
     </div>
     <div class="recb"><div class="rtop"><button type="button" class="btn sm ${rec.on ? 'on' : ''}" id="recT">🔁 Récurrence</button><span class="vhint">${serie.length > 1 ? `Fait partie d'une série de ${serie.length} séances (jusqu'au ${fdate(serie[serie.length - 1].date)}).` : 'Répéter cette séance sur plusieurs semaines'}</span></div>
       <div id="recP" style="display:${rec.on ? 'flex' : 'none'};flex-direction:column;gap:10px">
@@ -806,13 +805,8 @@ function sessionModal(s, date, draft) {
       <div class="dict"><button class="micb" id="mic" title="Dicter la séance">🎤</button><input id="vt" placeholder="Dicter ou écrire : « ajoute squat 4 séries de 8 à 20 kg, enlève le gainage »"><button class="btn sm p" id="vgo">OK</button></div>
       <div id="vmsg" class="vhint"></div>
     </div>
-    <div class="f"><label>Consignes / notes pour le patient</label><textarea id="sN" placeholder="Douleur tolérée ≤ 3/10 pendant l'effort…">${esc(d.notes)}</textarea></div>
-    ${d.douleurPatient != null || d.ressenti ? `<div class="f"><label>Retour du patient à la fin de la séance</label><div class="qbox">${d.douleurPatient != null ? `<span class="pill lv${lvl(d.douleurPatient)}">Douleur ${d.douleurPatient}/10</span>` : ''}<span style="font-size:13px">${d.commentairePatient ? '« ' + esc(d.commentairePatient) + ' »' : ''}${d.ressenti ? ' <span style="color:var(--mut)">(' + esc(d.ressenti) + ')</span>' : ''}</span></div></div>` : ''}
-    ${!isNew ? `<div class="f"><label>Questionnaire J+1</label>${q ? `<div class="qbox">
-      <span class="pill lv${lvl(q.douleur)}">Douleur ${q.douleur}/10</span><span class="pill lv${lvl(q.courbatures)}">Courbatures ${q.courbatures}/10</span>
-      ${q.fatigue != null ? `<span class="pill lv${lvl(q.fatigue)}">Fatigue ${q.fatigue}/10</span>` : ''}
-      <span class="k" style="color:var(--mut);font-size:12.5px">${q.commentaire ? '« ' + esc(q.commentaire) + ' »' : ''}</span>
-      <button class="btn sm" id="seeQ">Voir / modifier</button></div>` : `<div class="qbox"><span style="color:var(--mut)">Pas encore de réponse (attendue le ${fdateL(addDays(d.date, 1))}).</span><button class="btn sm" id="fillQ">Saisir pour le patient</button></div>`}</div>` : ''}`;
+    <div class="f"><label>Consignes / notes de séance</label><textarea id="sN" placeholder="Douleur tolérée ≤ 3/10 pendant l'effort…">${esc(d.notes)}</textarea></div>
+    <div class="f"><label>Ressenti / remarques après la séance</label><textarea id="sC" style="min-height:48px">${esc(d.commentairePatient || '')}</textarea></div>`;
   const foot = `${!isNew ? `<button class="btn d" id="del">Supprimer</button><button class="btn" id="dup">Dupliquer +7 j</button>` : ''}<div class="sp"></div><button class="btn" data-close>Annuler</button><button class="btn p" id="ok">Enregistrer</button>`;
   modal({ title: isNew ? 'Nouvelle séance' : 'Séance du ' + fdateL(d.date), body, foot, wide: true, mount: m => {
     $('#sSt', m).value = d.statut;
@@ -877,7 +871,7 @@ function sessionModal(s, date, draft) {
     $('#newEx', m).onclick = () => { collect(); exerciseModal(null, ex => { d.items.push({ exId: ex.id, series: ex.series, reps: ex.reps, charge: ex.charge, repos: ex.repos, note: '' }); reopen(); }, reopen); };
     const collect = () => {
       d.titre = $('#sT', m).value.trim(); d.date = $('#sD', m).value || d.date; d.lieu = $('#sL', m).value;
-      d.duree = $('#sM', m).value; d.statut = $('#sSt', m).value; d.rpe = $('#sR', m).value; d.notes = $('#sN', m).value;
+      d.duree = $('#sM', m).value; d.statut = $('#sSt', m).value; d.rpe = $('#sR', m).value; const dl = $('#sDl', m).value; d.douleurPatient = dl === '' ? null : Math.max(0, Math.min(10, Math.round(+dl))); d.commentairePatient = $('#sC', m).value.trim(); d.notes = $('#sN', m).value;
     };
     const reopen = () => sessionModal(isNew ? null : s, d.date, d);
     // Récurrence
@@ -936,8 +930,6 @@ function sessionModal(s, date, draft) {
         ], reopen);
       };
       $('#dup', m).onclick = () => { collect(); const c = { ...JSON.parse(JSON.stringify(d)), id: uid(), date: addDays(d.date, 7), statut: 'prevue', rpe: '', ressenti: '' }; delete c._rec; delete c.serieId; delete c.douleurPatient; delete c.commentairePatient; S.seances.push(c); save(); closeModal(); render(); toast('Séance dupliquée au ' + fdateL(c.date)); };
-      const sq = $('#seeQ', m); if (sq) sq.onclick = () => questionnaireModal(q);
-      const fq = $('#fillQ', m); if (fq) fq.onclick = () => questionnaireModal(null, s);
     }
   } });
 }
@@ -1085,11 +1077,11 @@ function patientModal(p) {
     <div class="fr"><div class="f"><label>Début de prise en charge</label><input id="pD" type="date" value="${d.debut}"></div><div class="f"><label>Téléphone</label><input id="pT" value="${esc(d.tel)}"></div></div>
     <div class="f"><label>E-mail du patient (facultatif)</label><input id="pE" type="email" value="${esc(d.email || '')}"></div>
     <div class="f"><label>Notes (jamais envoyées au patient)</label><textarea id="pX">${esc(d.notes)}</textarea></div>
-    ${!isNew ? '<div class="f"><label>Lien patient</label><div class="qbox" id="plink"></div></div>' : ''}`,
-    foot: `${!isNew ? '<button class="btn d" id="del">Supprimer le patient</button>' : ''}<div class="sp"></div><button class="btn" data-close>Annuler</button><button class="btn p" id="ok">Enregistrer</button>`,
+    `,
+    foot: `${!isNew ? `<button class="btn d" id="del">Supprimer le patient</button><button class="btn" id="arc">${d.archive ? 'Réactiver' : '🗄 Archiver'}</button>` : ''}<div class="sp"></div><button class="btn" data-close>Annuler</button><button class="btn p" id="ok">Enregistrer</button>`,
     mount: m => {
       $('#pP', m).focus();
-      if (!isNew) linkPanel(m, d);
+      if (!isNew) $('#arc', m).onclick = () => { const p = P(d.id); closeModal(); if (p) setArchive(p, !p.archive); };
       $('#ok', m).onclick = () => {
         d.email = $('#pE', m).value.trim();
         Object.assign(d, { prenom: $('#pP', m).value.trim(), nom: $('#pN', m).value.trim(), pathologie: $('#pM', m).value.trim(), objectif: $('#pO', m).value.trim(), debut: $('#pD', m).value, tel: $('#pT', m).value.trim(), notes: $('#pX', m).value });
@@ -1281,122 +1273,40 @@ function exerciseModal(e, onCreate, onCancel, cat) {
 function renderSuivi(m) {
   const p = P(UI.pid), t = today(), N = UI.suiviDays;
   const from = addDays(t, -N + 1);
-  const qs = qOf(p.id).filter(q => q.date >= from && q.date <= t);
-  const ses = sesOf(p.id).filter(s => s.date >= from && s.date <= t);
-  const done = ses.filter(s => s.statut === 'faite').length;
+  const ses = sesOf(p.id).filter(s => s.date >= from && s.date <= t).sort((a, b) => a.date.localeCompare(b.date));
+  const done = ses.filter(s => s.statut === 'faite');
   const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
-  const last7 = qOf(p.id).filter(q => q.date > addDays(t, -7)), prev7 = qOf(p.id).filter(q => q.date > addDays(t, -14) && q.date <= addDays(t, -7));
-  const d7 = avg(last7.map(q => q.douleur)), dp = avg(prev7.map(q => q.douleur));
-  const c7 = avg(last7.map(q => q.courbatures));
-  const allQ = qOf(p.id);
-  const answered = sesOf(p.id).filter(s => s.date < t && s.statut !== 'manquee');
-  const rate = answered.length ? Math.round(answered.filter(s => qForSes(s.id)).length / answered.length * 100) : null;
+  const pts = done.filter(s => s.douleurPatient != null);
+  const rp = done.filter(s => s.rpe !== '' && s.rpe != null && !isNaN(+s.rpe));
+  const d7 = avg(sesOf(p.id).filter(s => s.douleurPatient != null && s.date > addDays(t, -7) && s.date <= t).map(s => s.douleurPatient));
+  const dp = avg(sesOf(p.id).filter(s => s.douleurPatient != null && s.date > addDays(t, -14) && s.date <= addDays(t, -7)).map(s => s.douleurPatient));
   const trend = d7 != null && dp != null ? d7 - dp : null;
-  // Graphique SVG
+  const minutes = done.reduce((a, s) => a + (+s.duree || 0), 0);
   const W = 900, H = 260, L = 34, R = 12, T = 14, B = 30, iw = W - L - R, ih = H - T - B;
   const x = dd => L + diffDays(from, dd) / (N - 1) * iw, y = v => T + ih - v / 10 * ih;
   let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">`;
+  cycOf(p.id).forEach(c => { const a = c.debut < from ? from : c.debut, b = c.fin > t ? t : c.fin; if (a <= b) svg += `<rect x="${x(a)}" y="${T}" width="${Math.max(1, x(b) - x(a))}" height="${ih}" fill="${c.couleur}" opacity=".07"/><text x="${x(a) + 4}" y="${T + 11}" font-size="10" fill="${c.couleur}" font-weight="600">${esc(c.nom)}</text>`; });
   [0, 2, 4, 6, 8, 10].forEach(v => svg += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#e8ecf3"/><text x="${L - 8}" y="${y(v) + 4}" font-size="11" text-anchor="end" fill="#6b7689">${v}</text>`);
-  svg += `<rect x="${L}" y="${y(10)}" width="${iw}" height="${y(6) - y(10)}" fill="#d64545" opacity=".04"/>`;
   for (let i = 0; i < N; i += 7) { const dd = addDays(from, i); svg += `<text x="${x(dd)}" y="${H - 8}" font-size="11" text-anchor="middle" fill="#6b7689">${fdate(dd)}</text>`; }
   ses.forEach(s => svg += `<rect x="${x(s.date) - 3}" y="${T + ih - 7}" width="6" height="7" rx="1.5" fill="${s.statut === 'faite' ? (s.lieu === 'domicile' ? '#2f6fdf' : s.lieu === 'bilan' ? '#8b5cf6' : '#d64545') : '#c5cddb'}"><title>${esc(s.titre)} – ${fdate(s.date)}</title></rect>`);
-  const line = (k, col) => { if (!qs.length) return ''; const pts = qs.map(q => `${x(q.date).toFixed(1)},${y(q[k]).toFixed(1)}`); return `<polyline points="${pts.join(' ')}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round"/>` + qs.map(q => `<circle cx="${x(q.date)}" cy="${y(q[k])}" r="4" fill="#fff" stroke="${col}" stroke-width="2"><title>${fdate(q.date)} : ${k} ${q[k]}/10</title></circle>`).join(''); };
-  svg += line('courbatures', '#e8900c') + line('douleur', '#d64545') + '</svg>';
+  const line = (arr, val, col, lab) => { if (!arr.length) return ''; return `<polyline points="${arr.map(s => `${x(s.date).toFixed(1)},${y(val(s)).toFixed(1)}`).join(' ')}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round"/>` + arr.map(s => `<circle cx="${x(s.date)}" cy="${y(val(s))}" r="4" fill="#fff" stroke="${col}" stroke-width="2"><title>${fdate(s.date)} · ${lab} ${val(s)}/10</title></circle>`).join(''); };
+  svg += line(rp, s => +s.rpe, '#8b5cf6', 'RPE') + line(pts, s => s.douleurPatient, '#d64545', 'douleur') + '</svg>';
   const fmt = v => v == null ? '–' : v.toFixed(1);
   m.innerHTML = patientHeader(`<div class="seg" id="per">${[[14, '2 sem.'], [42, '6 sem.'], [90, '3 mois']].map(([n, l]) => `<button data-n="${n}" class="${N === n ? 'on' : ''}">${l}</button>`).join('')}</div>`) + `
     <div class="grid g4" style="margin-bottom:14px">
-      <div class="panel kpi"><div class="l">Assiduité</div><div class="v">${ses.length ? Math.round(done / ses.length * 100) + ' %' : '–'}</div><div class="d" style="color:var(--mut)">${done}/${ses.length} séances réalisées</div></div>
-      <div class="panel kpi"><div class="l">Douleur J+1 (7 j)</div><div class="v" style="color:${d7 == null ? 'inherit' : ['var(--ok)', 'var(--warn)', 'var(--bad)'][lvl(d7)]}">${fmt(d7)}</div><div class="d" style="color:${trend == null ? 'var(--mut)' : trend > 0 ? 'var(--bad)' : 'var(--ok)'}">${trend == null ? 'pas de comparaison' : (trend > 0 ? '▲ +' : '▼ ') + trend.toFixed(1) + ' vs semaine préc.'}</div></div>
-      <div class="panel kpi"><div class="l">Courbatures J+1 (7 j)</div><div class="v">${fmt(c7)}</div><div class="d" style="color:var(--mut)">sur 10</div></div>
-      <div class="panel kpi"><div class="l">Taux de réponse</div><div class="v">${rate == null ? '–' : rate + ' %'}</div><div class="d" style="color:var(--mut)">questionnaires J+1</div></div>
+      <div class="panel kpi"><div class="l">Assiduité</div><div class="v">${ses.length ? Math.round(done.length / ses.length * 100) + ' %' : '–'}</div><div class="d" style="color:var(--mut)">${done.length}/${ses.length} séances réalisées</div></div>
+      <div class="panel kpi"><div class="l">Douleur (7 derniers jours)</div><div class="v" style="color:${d7 == null ? 'inherit' : ['var(--ok)', 'var(--warn)', 'var(--bad)'][lvl(d7)]}">${fmt(d7)}</div><div class="d" style="color:${trend == null ? 'var(--mut)' : trend > 0 ? 'var(--bad)' : 'var(--ok)'}">${trend == null ? 'pas de comparaison' : (trend > 0 ? '▲ +' : '▼ ') + trend.toFixed(1) + ' vs semaine préc.'}</div></div>
+      <div class="panel kpi"><div class="l">RPE moyen</div><div class="v">${fmt(avg(rp.map(s => +s.rpe)))}</div><div class="d" style="color:var(--mut)">sur 10, séances réalisées</div></div>
+      <div class="panel kpi"><div class="l">Temps de travail</div><div class="v">${Math.floor(minutes / 60)} h ${pad(minutes % 60)}</div><div class="d" style="color:var(--mut)">séances réalisées</div></div>
     </div>
-    <div class="panel" style="margin-bottom:14px"><h2>Douleur et courbatures le lendemain des séances</h2>${svg}
-      <div class="legend"><span><i style="background:#d64545"></i>Douleur (EVA)</span><span><i style="background:#e8900c"></i>Courbatures</span><span><i style="background:#d64545"></i>Séance cabinet</span><span><i style="background:#2f6fdf"></i>Auto-exercice</span><span><i style="background:#c5cddb"></i>Non réalisée / prévue</span></div></div>
-    <div class="panel"><h2>Réponses du patient</h2>${allQ.length ? `<table><thead><tr><th>Date</th><th>Séance</th><th>Douleur</th><th>Courb.</th><th>Fatigue</th><th>Sommeil</th><th>Commentaire</th></tr></thead><tbody>
-      ${allQ.slice().reverse().map(q => { const s = S.seances.find(x => x.id === q.seanceId); return `<tr data-q="${q.id}" style="cursor:pointer"><td>${fdateL(q.date)}</td><td>${esc(s ? s.titre : '—')}</td>
-        <td><span class="pill lv${lvl(q.douleur)}">${q.douleur}</span></td><td><span class="pill lv${lvl(q.courbatures)}">${q.courbatures}</span></td><td>${q.fatigue ?? '–'}</td><td>${esc(q.sommeil || '')}${q.gonflement === 'oui' ? ' · gonflement' : ''}</td><td>${esc(q.commentaire || '')}</td></tr>`; }).join('')}
-      </tbody></table>` : '<div style="color:var(--mut)">Aucune réponse pour l\'instant.</div>'}</div>`;
+    <div class="panel" style="margin-bottom:14px"><h2>Douleur et effort pendant les séances</h2>${svg}
+      <div class="legend"><span><i style="background:#d64545"></i>Douleur (0–10)</span><span><i style="background:#8b5cf6"></i>RPE</span><span><i style="background:#d64545;opacity:.5"></i>Séance cabinet</span><span><i style="background:#2f6fdf"></i>Auto-exercice</span><span><i style="background:#c5cddb"></i>Non réalisée / prévue</span></div></div>
+    <div class="panel"><h2>Séances réalisées</h2>${done.length ? `<table><thead><tr><th>Date</th><th>Séance</th><th>Lieu</th><th>Douleur</th><th>RPE</th><th>Ressenti</th></tr></thead><tbody>
+      ${done.slice().reverse().map(s => `<tr data-s="${s.id}" style="cursor:pointer"><td>${fdateL(s.date)}</td><td>${esc(s.titre)}</td><td>${LIEUX[s.lieu] || ''}</td>
+        <td>${s.douleurPatient != null ? `<span class="pill lv${lvl(s.douleurPatient)}">${s.douleurPatient}</span>` : '–'}</td><td>${esc(s.rpe || '–')}</td><td>${esc(s.commentairePatient || '')}</td></tr>`).join('')}
+      </tbody></table>` : '<div style="color:var(--mut)">Aucune séance réalisée sur la période.</div>'}</div>`;
   $$('#per button').forEach(b => b.onclick = () => { UI.suiviDays = +b.dataset.n; render(); });
-  $$('tr[data-q]', m).forEach(r => r.onclick = () => questionnaireModal(S.questionnaires.find(q => q.id === r.dataset.q)));
-}
-
-/* ---------- Vue patient (aperçu mobile) ---------- */
-function renderPatient(m) {
-  const p = P(UI.pid), t = today();
-  const pend = pendingQuestionnaire(p.id);
-  const auto = sesOf(p.id).filter(s => s.lieu === 'domicile');
-  const todayS = auto.filter(s => s.date === t || (s.date < t && s.date >= addDays(t, -2) && s.statut === 'prevue')).sort((a, b) => b.date.localeCompare(a.date));
-  const next = auto.filter(s => s.date > t && s.date <= addDays(t, 7)).sort((a, b) => a.date.localeCompare(b.date));
-  const cy = cycleAt(p.id, t);
-  const qd = { douleur: 0, courbatures: 0, fatigue: 0 };
-  const sl = (k, l, lo, hi) => `<div class="sl"><div class="h"><span>${l}</span><b id="pv_${k}">0</b></div><input type="range" min="0" max="10" value="0" data-k="${k}"><div class="ends"><span>${lo}</span><span>${hi}</span></div></div>`;
-  let ph = `<div class="ptop"><div class="hi">Bonjour ${esc(p.prenom)} 👋</div><div class="sub">${fdateL(t)}</div></div>`;
-  if (pend) {
-    ph += `<div class="pcard" id="pq"><h3>Comment vous sentez-vous ?</h3><div class="k">Suite à votre séance « ${esc(pend.titre)} » du ${fdateL(pend.date)}</div>
-      ${sl('douleur', 'Douleur', 'Aucune', 'Maximale')}${sl('courbatures', 'Courbatures', 'Aucune', 'Très intenses')}${sl('fatigue', 'Fatigue', 'En forme', 'Épuisé')}
-      <div class="sl"><div class="h"><span>Sommeil</span></div><div class="seg" id="psm" style="margin-top:8px"><button data-v="bon" class="on">Bon</button><button data-v="moyen">Moyen</button><button data-v="mauvais">Mauvais</button></div></div>
-      <div class="sl"><div class="h"><span>Un commentaire ?</span></div><textarea id="pc" style="width:100%;margin-top:6px;border:1px solid var(--line);border-radius:9px;padding:8px;min-height:56px"></textarea></div>
-      <button class="pbtn" id="psend">Envoyer à mon kiné</button></div>`;
-  }
-  if (todayS.length) ph += `<div class="tm" id="tm"><div class="lab"><span>⏱ Minuteur</span><span id="tml">${TM.label || 'Chrono'}</span></div>
-    <div class="disp" id="tmd">${fmtT(tmValue())}</div>
-    <div class="row"><button class="go" id="tmgo">${TM.running ? '⏸ Pause' : '▶ Démarrer'}</button><button id="tmrs">↺</button></div>
-    <div class="row pre">${[[30, '30 s'], [45, '45 s'], [60, '1 min'], [90, '1 min 30'], [120, '2 min'], [0, 'Chrono']].map(([v, l]) => `<button data-pre="${v}">${l}</button>`).join('')}</div></div>`;
-  todayS.forEach(s => {
-    const k = UI.done[s.id] || (UI.done[s.id] = {});
-    const when = s.date === t ? "Aujourd'hui" : fdateL(s.date) + ' · à valider';
-    ph += `<div class="pcard"><h3>${s.statut === 'faite' ? '✅ ' : '🏠 '}${esc(s.titre)}</h3><div class="k">${when} · Auto-exercice${s.duree ? ' · ' + s.duree + ' min' : ''}</div>
-      ${s.notes ? `<div style="font-size:12.5px;margin-top:8px;background:var(--pri-l);padding:8px 10px;border-radius:9px">💬 ${esc(s.notes)}</div>` : ''}
-      <div style="margin-top:6px">${(s.items || []).map((it, i) => { const e = EX(it.exId) || { nom: '?', consignes: '' }; const work = parseSec(it.reps), rest = parseSec(it.repos), rs = runSeq(it);
-        return `<div class="pex"><input type="checkbox" data-sx="${s.id}" data-i="${i}" ${k[i] || s.statut === 'faite' ? 'checked' : ''}><div style="flex:1"><div class="n">${esc(e.nom)}</div><div class="c"><b>${esc(it.series)} × ${esc(it.reps)}</b>${it.charge ? ' · ' + esc(it.charge) : ''}${it.repos ? ' · repos ' + esc(it.repos) : ''}</div><div class="c">${esc(it.note || e.consignes)}</div></div>
-        <div style="display:flex;flex-direction:column;gap:4px">${rs ? `<button class="tbtn" data-seq="${s.id}:${i}">▶ Course / marche</button>` : ''}${work ? `<button class="tbtn" data-tm="${work}" data-tl="${esc(e.nom)} · effort">⏱ ${fmtT(work)}</button>` : ''}${rest ? `<button class="tbtn" data-tm="${rest}" data-tl="Repos · ${esc(e.nom)}">💤 ${fmtT(rest)}</button>` : ''}</div></div>`; }).join('')}</div>
-      ${s.statut === 'faite' ? `<div class="pdone">✅ Séance validée${s.douleurPatient != null ? ` · douleur <b>${s.douleurPatient}/10</b>` : ''}${s.commentairePatient ? `<br>💬 ${esc(s.commentairePatient)}` : ''}</div>` :
-      `<div class="pval"><div class="sl" style="margin-top:0"><div class="h"><span>Douleur pendant la séance</span><b id="pdv_${s.id}">0</b>/10</div><input type="range" min="0" max="10" value="0" data-pd="${s.id}"><div class="ends"><span>0 = aucune</span><span>10 = maximale</span></div></div>
-        <div class="sl"><div class="h"><span>Commentaire</span></div><textarea data-pc="${s.id}" placeholder="Comment s'est passée la séance ?"></textarea></div>
-        <button class="pbtn g" data-fin="${s.id}">✅ Valider ma séance</button></div>`}</div>`;
-  });
-  if (!pend && !todayS.length) ph += `<div class="pcard"><h3>Pas d'auto-exercice aujourd'hui 😌</h3><div class="k">Aucune séance ni questionnaire en attente.</div></div>`;
-  const nr = rdvOf(p.id).filter(r => r.date >= t).slice(0, 3);
-  if (nr.length) ph += `<div class="pcard"><h3>Vos prochains rendez-vous</h3>${nr.map(r => { const T = RDV_T[r.type] || RDV_T.autre; return `<div class="pup"><span>${T.i} ${esc(r.titre || T.l)}<br><span class="k" style="font-size:12px;color:var(--mut)">${fdateL(r.date)}${r.heure ? ' · ' + esc(r.heure) : ''}</span></span><span style="font-weight:700;color:${T.c}">${jx(r.date)[0]}</span></div>`; }).join('')}</div>`;
-  ph += `<div class="pcard"><h3>Mes prochains auto-exercices</h3>${next.length ? next.map(s => `<div class="pup"><span>${fdateL(s.date)}</span><span style="font-weight:600">${esc(s.titre)}</span></div>`).join('') : '<div class="k">Rien de prévu dans les 7 prochains jours.</div>'}</div><div style="height:16px"></div>`;
-  m.innerHTML = patientHeader() + `<div class="pv"><div class="phone"><div class="scr">${ph}</div></div>
-    <div class="note-box"><h3>Aperçu de l'écran patient</h3>
-    <p>Ce que ${esc(p.prenom)} voit sur son téléphone : uniquement <b>ses séances d'auto-exercice</b> (en bleu dans le calendrier), avec un <b>minuteur</b> (boutons ⏱ effort et 💤 repos sur chaque exercice), la <b>validation de la séance</b> avec sa douleur /10 et un commentaire, le <b>questionnaire du lendemain</b> et ses prochains rendez-vous. Les séances cabinet (en rouge) n'y apparaissent pas.</p>
-    <p>Ici, vous pouvez tester le parcours : les réponses et validations s'enregistrent réellement dans le dossier du patient et apparaissent dans le calendrier et l'onglet Suivi.</p>
-    <p style="color:var(--mut);font-size:12.5px">Alertes automatiques côté kiné : point rouge si douleur ≥ 6/10 ou courbatures ≥ 7/10, point orange si la douleur augmente de 2 points ou plus d'une réponse à l'autre.</p>
-    ${pend ? '' : `<p><button class="btn" id="simQ">Simuler : séance d'hier à renseigner</button></p>`}</div></div>`;
-  if (pend) {
-    const box = $('#pq');
-    $$('input[type=range]', box).forEach(r => r.oninput = () => { qd[r.dataset.k] = +r.value; $('#pv_' + r.dataset.k).textContent = r.value; });
-    let sm = 'bon'; $$('#psm button', box).forEach(b => b.onclick = () => { sm = b.dataset.v; $$('#psm button', box).forEach(x => x.classList.toggle('on', x === b)); });
-    $('#psend').onclick = () => {
-      S.questionnaires.push({ id: uid(), seanceId: pend.id, patientId: p.id, date: addDays(pend.date, 1) > t ? t : addDays(pend.date, 1), douleur: qd.douleur, courbatures: qd.courbatures, fatigue: qd.fatigue, sommeil: sm, gonflement: 'non', commentaire: $('#pc').value.trim(), rempliLe: t });
-      if (pend.statut === 'prevue') pend.statut = 'faite';
-      save(); render(); toast('Merci ! Réponse envoyée à votre kiné');
-    };
-  }
-  $$('[data-sx]', m).forEach(c => c.onchange = () => { UI.done[c.dataset.sx][c.dataset.i] = c.checked; });
-  $$('[data-pd]', m).forEach(r => r.oninput = () => { $('#pdv_' + r.dataset.pd).textContent = r.value; });
-  $$('[data-fin]', m).forEach(b => b.onclick = () => {
-    const s = S.seances.find(x => x.id === b.dataset.fin); s.statut = 'faite';
-    s.douleurPatient = +$(`[data-pd="${s.id}"]`).value; s.commentairePatient = $(`[data-pc="${s.id}"]`).value.trim(); s.valideLe = today();
-    const n = Object.values(UI.done[s.id] || {}).filter(Boolean).length; if (n && n < s.items.length) s.ressenti = `${n}/${s.items.length} exercices cochés`;
-    save(); render(); toast('Bravo, séance validée 💪');
-  });
-  // Minuteur
-  const go = $('#tmgo'); if (go) {
-    go.onclick = () => { tmToggle(); go.textContent = TM.running ? '⏸ Pause' : '▶ Démarrer'; };
-    $('#tmrs').onclick = () => { tmSet(TM.total, TM.label); };
-    $$('[data-pre]', m).forEach(b => b.onclick = () => { tmSet(+b.dataset.pre, +b.dataset.pre ? 'Compte à rebours' : 'Chrono'); });
-    $$('[data-seq]', m).forEach(b => b.onclick = () => { const [sid, i] = b.dataset.seq.split(':'); const s = S.seances.find(x => x.id === sid); const sq = s && runSeq(s.items[+i]); if (!sq) return; tmSeq(sq); tmToggle(); $('#tmgo').textContent = '⏸ Pause'; $('#tm').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
-    $$('[data-tm]', m).forEach(b => b.onclick = () => { tmSet(+b.dataset.tm, b.dataset.tl); tmToggle(); $('#tmgo').textContent = '⏸ Pause'; $('#tm').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
-  }
-  const sim = $('#simQ'); if (sim) sim.onclick = () => {
-    const y = addDays(t, -1);
-    let s = sesOf(p.id).find(x => x.date === y && !qForSes(x.id));
-    if (!s) { s = { id: uid(), patientId: p.id, date: y, titre: 'Séance test', lieu: 'cabinet', duree: 45, statut: 'faite', rpe: '', ressenti: '', notes: '', items: S.exercices.slice(0, 3).map(e => ({ exId: e.id, series: e.series, reps: e.reps, charge: e.charge, repos: e.repos, note: '' })) }; S.seances.push(s); }
-    save(); render();
-  };
+  $$('tr[data-s]', m).forEach(r => r.onclick = () => sessionModal(S.seances.find(s => s.id === r.dataset.s)));
 }
 
 /* ---------- Minuteur ---------- */
@@ -1453,7 +1363,7 @@ function loadDemo() {
   [[a, painA], [b, painB]].forEach(([p, arr]) => {
     sesOf(p.id).filter(s => s.date < addDays(t, -1)).sort((x, y) => x.date.localeCompare(y.date)).forEach((s, k) => {
       const dv = arr[k % arr.length];
-      S.questionnaires.push({ id: uid(), seanceId: s.id, patientId: p.id, date: addDays(s.date, 1), douleur: dv, courbatures: Math.min(10, dv + 1 + (k % 2)), fatigue: 3 + (k % 3), sommeil: k % 4 ? 'bon' : 'moyen', gonflement: 'non', commentaire: k === 2 ? 'Gêne en descendant les escaliers' : '' });
+      s.douleurPatient = dv; if (k === 2) s.commentairePatient = 'Gêne en descendant les escaliers';
     });
   });
   S.rdv = S.rdv || [];
@@ -1466,14 +1376,14 @@ function loadDemo() {
 /* ---------- Navigation ---------- */
 function route() {
   const h = location.hash.replace('#', '');
-  UI.view = ['calendrier', 'exercices', 'suivi', 'patient'].includes(h) ? h : 'calendrier';
+  UI.view = ['calendrier', 'exercices', 'suivi'].includes(h) ? h : 'calendrier';
   render();
 }
 window.addEventListener('hashchange', route);
 $('#addP').onclick = () => patientModal();
 $('#q').oninput = e => { UI.pq = e.target.value; renderSide(); };
 const h0 = location.hash.replace('#', '');
-if (['calendrier', 'exercices', 'suivi', 'patient'].includes(h0)) UI.view = h0;
+if (['calendrier', 'exercices', 'suivi'].includes(h0)) UI.view = h0;
 initStore();
 </script>
 </body>
