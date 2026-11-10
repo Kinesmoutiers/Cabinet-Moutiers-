@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cabinet Moutiers sur Lay – Planification</title>
+<meta name="robots" content="noindex">
+<style>
+:root{
+  --nav:#15233b; --nav2:#1e3150; --bg:#f3f5f9; --card:#fff; --line:#e3e7ef; --ink:#1b2433; --mut:#6b7689;
+  --pri:#2f6fdf; --pri-l:#e8f0fd; --ok:#1f9d6b; --warn:#e8900c; --bad:#d64545;
+  --cab:#d64545; --dom:#2f6fdf; --bil:#8b5cf6;
+  --r:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+button{font:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+.app{display:grid;grid-template-rows:56px 1fr;height:100vh}
+/* Top bar */
+.top{background:var(--nav);color:#fff;display:flex;align-items:center;gap:24px;padding:0 18px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;white-space:nowrap}
+.logo .mk{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#3d86ff,#22c3a6);display:grid;place-items:center;font-size:15px}
+.tabs{display:flex;gap:4px;height:100%;overflow-x:auto}
+.tabs a{color:#b8c4d8;text-decoration:none;display:flex;align-items:center;gap:7px;padding:0 14px;height:100%;border-bottom:3px solid transparent;font-weight:500;white-space:nowrap}
+.tabs a:hover{color:#fff}
+.tabs a.on{color:#fff;border-bottom-color:#3d86ff}
+.sync{margin-left:auto;font-size:12px;color:#93a3bd;white-space:nowrap}
+.sync b{display:inline-block;width:7px;height:7px;border-radius:50%;background:#93a3bd;margin-right:6px;vertical-align:middle}
+.sync.ok b{background:#22c38e}.sync.loc b{background:#e8900c}
+/* Layout */
+.body{display:grid;grid-template-columns:270px 1fr;min-height:0}
+.side{background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.side-h{padding:14px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.side-h .row{display:flex;justify-content:space-between;align-items:center}
+.side-h h3{margin:0;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
+.search{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.plist{overflow:auto;flex:1;padding:6px}
+.pitem{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;position:relative}
+.pitem:hover{background:var(--bg)}
+.pitem.on{background:var(--pri-l)}
+.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:600;font-size:13px;flex:none}
+.pitem .nm{font-weight:600;font-size:13.5px}
+.pitem .sb{font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
+.dot{width:9px;height:9px;border-radius:50%;position:absolute;right:12px;top:50%;transform:translateY(-50%)}
+.dot.rouge{background:var(--bad)}.dot.orange{background:var(--warn)}
+.side-f{padding:12px;border-top:1px solid var(--line);font-size:12px;color:var(--mut)}
+.main{overflow:auto;padding:18px 22px 40px;min-width:0}
+/* Buttons */
+a.btn{text-decoration:none}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;font-weight:500;display:inline-flex;align-items:center;gap:6px;color:var(--ink)}
+.btn:hover{border-color:#c5cddb}
+.btn.p{background:var(--pri);border-color:var(--pri);color:#fff}
+.btn.p:hover{background:#2560c9}
+.btn.d{color:var(--bad)}
+.btn.sm{padding:4px 9px;font-size:12.5px}
+.btn.ic{padding:6px 9px}
+.btn:disabled{opacity:.5;cursor:default}
+/* Header */
+.ph{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.ph h1{margin:0;font-size:20px}
+.ph .meta{color:var(--mut);font-size:13px}
+.ph .sp{flex:1}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600}
+.ctl{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.rng{font-weight:600;min-width:170px;text-align:center}
+/* Calendar */
+.cal{background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.cal-h,.cal-w{display:grid;grid-template-columns:repeat(7,minmax(108px,1fr)) 150px}
+.cal-h div{padding:9px 10px;font-size:12px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--line);background:#fafbfd}
+.cal-w{border-bottom:1px solid var(--line)}
+.cal-w:last-child{border-bottom:0}
+.day{border-right:1px solid var(--line);min-height:150px;padding:0 0 8px;position:relative;display:flex;flex-direction:column}
+.day.past{background:#fcfcfd}
+.day.drop{background:var(--pri-l)}
+.dnum{display:flex;justify-content:space-between;align-items:center;padding:6px 8px 4px;font-size:12.5px;color:var(--mut);font-weight:600}
+.day.today .dnum span{background:var(--pri);color:#fff;border-radius:99px;padding:1px 7px}
+.add{opacity:0;border:0;background:var(--pri-l);color:var(--pri);border-radius:6px;width:22px;height:22px;font-weight:700;line-height:1}
+.day:hover .add{opacity:1}
+.cyc{height:18px;font-size:10.5px;font-weight:600;color:#fff;padding:0 8px;line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+.cyc.none{background:transparent}
+.ses{margin:3px 6px;border-radius:7px;background:#fff;border:1px solid var(--line);border-left:4px solid var(--cab);padding:6px 7px;cursor:pointer;font-size:12px;box-shadow:0 1px 2px rgba(20,30,50,.05)}
+.ses:hover{box-shadow:0 2px 8px rgba(20,30,50,.12)}
+.ses .t{font-weight:600;font-size:12.5px;display:flex;justify-content:space-between;gap:4px}
+.ses .s{color:var(--mut);margin-top:2px}
+.ses.faite{background:#f6f8fb}
+.ses.manquee{opacity:.6;text-decoration:line-through}
+.ses.domicile{border-left-color:var(--dom)}
+.ses.bilan{border-left-color:var(--bil)}
+.q{margin:4px 6px 0;border-radius:6px;padding:4px 7px;font-size:11.5px;font-weight:600;display:flex;gap:8px;cursor:pointer}
+.lv0{background:#e6f6ee;color:#16774f}.lv1{background:#fff2dc;color:#a65f00}.lv2{background:#fde5e5;color:#b42f2f}
+.q.wait{background:#f1f3f7;color:var(--mut);font-weight:500}
+.wk{padding:10px 12px;background:#fafbfd;font-size:12px;display:flex;flex-direction:column;gap:6px}
+.wk .l{color:var(--mut)}
+.wk b{font-size:13px}
+.bar{height:6px;background:#e8ecf3;border-radius:9px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok)}
+.legend{display:flex;gap:16px;margin-top:10px;font-size:12px;color:var(--mut);flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+/* Rendez-vous & tests */
+.rdvp{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:12px}
+.rdvp-h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.rdvp-h h2{margin:0;font-size:14px}
+.rdvp-h .sp{flex:1}
+.rdvl{display:flex;gap:10px;overflow-x:auto;padding-bottom:2px}
+.rdvc{flex:none;min-width:220px;max-width:280px;border:1px solid var(--line);border-left:4px solid;border-radius:9px;padding:9px 12px;display:flex;gap:12px;align-items:center;cursor:pointer;background:#fff}
+.rdvc:hover{box-shadow:0 2px 8px rgba(20,30,50,.1)}
+.rdvc .jx{flex:none;text-align:center;min-width:52px;border-radius:8px;padding:5px 6px;font-weight:700;font-size:16px;line-height:1.1}
+.rdvc .jx small{display:block;font-size:10px;font-weight:600;opacity:.8}
+.rdvc .tt{font-weight:600;font-size:13px}
+.rdvc .dd{font-size:12px;color:var(--mut)}
+.rdvc.past{opacity:.55}
+.evt{margin:3px 6px;border-radius:7px;padding:5px 7px;font-size:11.5px;font-weight:600;cursor:pointer;display:flex;gap:5px;align-items:flex-start;color:#fff}
+/* Cards & grids */
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.panel h2{margin:0 0 12px;font-size:15px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+.kpi .v{font-size:24px;font-weight:700;margin-top:4px}
+.kpi .l{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+.kpi .d{font-size:12px;margin-top:2px}
+.exg{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.exc{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:6px}
+.exc:hover{border-color:#c5cddb}
+.exc h4{margin:0;font-size:14px}
+.exc .c{font-size:12px;color:var(--mut)}
+.exc .dose{font-size:12px;font-weight:600;color:var(--pri)}
+.tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;background:#eef1f6;color:#4a5568}
+/* Cycles */
+.tl{position:relative;border:1px solid var(--line);border-radius:var(--r);background:#fff;padding:14px 14px 10px;overflow-x:auto}
+.tl-in{position:relative;min-width:700px}
+.tl-m{display:flex;font-size:11px;color:var(--mut);border-bottom:1px solid var(--line);margin-bottom:8px}
+.tl-m div{border-left:1px solid var(--line);padding:2px 6px;white-space:nowrap;overflow:hidden}
+.tl-r{position:relative;height:34px;margin-bottom:6px}
+.tl-b{position:absolute;top:0;height:30px;border-radius:7px;color:#fff;font-size:12px;font-weight:600;padding:0 10px;display:flex;align-items:center;white-space:nowrap;overflow:hidden;cursor:pointer}
+.tl-today{position:absolute;top:0;bottom:0;width:2px;background:var(--bad);opacity:.6}
+.cyl{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.cy{background:#fff;border:1px solid var(--line);border-left:5px solid;border-radius:var(--r);padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:6px 14px}
+.cy h4{margin:0;font-size:14.5px}
+.cy .o{font-size:13px}
+.cy .k{font-size:12px;color:var(--mut)}
+.cy .acts{grid-row:1/4;grid-column:2;display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:11.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-weight:600;padding:8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid #eef1f5;vertical-align:top}
+.pill{display:inline-block;min-width:28px;text-align:center;padding:2px 7px;border-radius:99px;font-weight:700;font-size:12px}
+/* Modal */
+.ov{position:fixed;inset:0;background:rgba(15,25,45,.45);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;z-index:50}
+.mod{background:#fff;border-radius:14px;width:100%;max-width:640px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.mod.wide{max-width:860px}
+.mod-h{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line)}
+.mod-h h3{margin:0;font-size:16px}
+.x{border:0;background:none;font-size:22px;color:var(--mut);line-height:1}
+.mod-b{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.mod-f{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.mod-f .sp{flex:1}
+.f{display:flex;flex-direction:column;gap:5px}
+.f label{font-size:12px;font-weight:600;color:var(--mut)}
+.f input,.f select,.f textarea{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;width:100%}
+.f textarea{min-height:64px;resize:vertical}
+.fr{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
+.exrows{display:flex;flex-direction:column;gap:8px}
+.exr{border:1px solid var(--line);border-radius:9px;padding:9px 10px;display:grid;grid-template-columns:22px 1fr 58px 64px 74px 64px 30px;gap:6px;align-items:center;background:#fbfcfe}
+.exr .n{font-weight:600;font-size:13px}
+.exr input{border:1px solid var(--line);border-radius:6px;padding:5px 6px;width:100%;font-size:12.5px;background:#fff}
+.exr .note{grid-column:2/7}
+.exr-h{display:grid;grid-template-columns:22px 1fr 58px 64px 74px 64px 30px;gap:6px;font-size:11px;color:var(--mut);font-weight:600;padding:0 11px}
+.mv{border:0;background:none;color:var(--mut);padding:0;font-size:13px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:#fff;padding:7px 12px;font-weight:500;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--pri);color:#fff}
+.days7{display:flex;gap:6px;flex-wrap:wrap}
+.days7 label{border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer;font-weight:500;user-select:none}
+.days7 input{display:none}
+.days7 label:has(input:checked){background:var(--pri);border-color:var(--pri);color:#fff}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{border:1px solid var(--line);background:#fff;border-radius:99px;padding:5px 11px;font-size:12.5px}
+.chips button.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.qbox{border:1px solid var(--line);border-radius:10px;padding:12px;background:#fafbfd;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.empty{text-align:center;padding:50px 20px;color:var(--mut)}
+.empty h2{color:var(--ink);font-size:18px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--nav);color:#fff;padding:10px 18px;border-radius:9px;font-weight:500;z-index:80;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+/* Patient phone */
+.pv{display:grid;grid-template-columns:390px 1fr;gap:30px;align-items:start}
+.phone{background:#0e1626;border-radius:38px;padding:12px;box-shadow:0 20px 50px rgba(15,25,45,.25)}
+.scr{background:var(--bg);border-radius:28px;overflow:hidden;min-height:720px;max-height:780px;overflow-y:auto}
+.ptop{background:var(--nav);color:#fff;padding:22px 18px 18px}
+.ptop .hi{font-size:19px;font-weight:700}
+.ptop .sub{font-size:12.5px;color:#b8c4d8;margin-top:3px}
+.pcard{background:#fff;margin:12px;border-radius:14px;padding:14px;box-shadow:0 1px 3px rgba(20,30,50,.06)}
+.pcard h3{margin:0 0 4px;font-size:15px}
+.pcard .k{font-size:12.5px;color:var(--mut)}
+.sl{margin-top:14px}
+.sl .h{display:flex;justify-content:space-between;font-weight:600;font-size:13px}
+.sl .h b{font-size:16px}
+.sl input[type=range]{width:100%;margin-top:6px;accent-color:var(--pri)}
+.sl .ends{display:flex;justify-content:space-between;font-size:11px;color:var(--mut)}
+.pex{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid #eef1f5}
+.pex:last-child{border-bottom:0}
+.pex input{flex:none;width:20px;height:20px;margin-top:1px;accent-color:var(--ok)}
+.pex .n{font-weight:600;font-size:13.5px}
+.pex .c{font-size:12px;color:var(--mut)}
+.pbtn{width:100%;margin-top:12px;padding:12px;border:0;border-radius:11px;background:var(--pri);color:#fff;font-weight:600;font-size:14.5px}
+.pbtn.g{background:var(--ok)}
+.pup{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eef1f5;font-size:13px}
+.pup:last-child{border-bottom:0}
+.note-box{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:18px;font-size:13.5px;line-height:1.55}
+.note-box h3{margin-top:0}
+.sel-p{border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:#fff}
+/* Récurrence */
+.recb{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+.recb .rtop{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#recT.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.choice{display:flex;flex-direction:column;gap:8px}
+.choice button{text-align:left;border:1px solid var(--line);background:#fff;border-radius:10px;padding:12px 14px;font-weight:600}
+.choice button:hover{border-color:var(--pri);background:var(--pri-l)}
+.choice button small{display:block;font-weight:400;color:var(--mut);margin-top:2px}
+/* Minuteur patient */
+.tm{background:var(--nav);color:#fff;margin:12px;border-radius:14px;padding:14px}
+.tm .lab{font-size:12px;color:#b8c4d8;display:flex;justify-content:space-between}
+.tm .disp{font-size:44px;font-weight:700;font-variant-numeric:tabular-nums;text-align:center;letter-spacing:.02em;margin:4px 0 8px}
+.tm .disp.end{color:#ffb4b4}
+.tm .row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.tm button{border:0;border-radius:9px;padding:8px 11px;font-weight:600;background:#2a3d5e;color:#fff}
+.tm button.go{background:#2f6fdf;min-width:92px}
+.tm .pre{margin-top:8px}.tm .pre button{background:transparent;border:1px solid #3a4f72;font-size:12px;padding:5px 9px}
+.tbtn{flex:none;border:1px solid var(--line);background:#fff;border-radius:8px;font-size:12px;padding:4px 7px;margin-left:auto;align-self:center;white-space:nowrap}
+.pval{margin-top:12px;border-top:1px solid #eef1f5;padding-top:10px}
+.pval textarea{width:100%;margin-top:6px;border:1px solid var(--line);border-radius:9px;padding:8px;min-height:56px}
+.pdone{margin-top:10px;background:#eef4fe;border-radius:10px;padding:10px;font-size:13px}
+/* Commande vocale */
+.dict{display:flex;gap:6px;align-items:center;margin-top:8px}
+.dict input{flex:1;border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+.micb{flex:none;border:1px solid var(--line);background:#fff;border-radius:50%;width:38px;height:38px;font-size:18px;line-height:1;padding:0}
+.micb:hover{background:#fdf1f1}
+.micb.on{background:#fde5e5;border-color:#d64545;animation:pulse 1.1s infinite}
+.exr.hl{border-color:#9fd9bf;background:#f1faf6}
+.vbtn{background:linear-gradient(135deg,#d64545,#e8900c);border:0;color:#fff}
+.vbtn:hover{filter:brightness(1.05)}
+.vin{display:flex;gap:8px;align-items:stretch}
+.vin textarea{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:84px;font-size:15px;resize:vertical}
+.mic{flex:none;width:64px;border-radius:12px;border:0;background:#d64545;color:#fff;font-size:26px}
+.mic.on{animation:pulse 1.1s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(214,69,69,.5)}100%{box-shadow:0 0 0 14px rgba(214,69,69,0)}}
+.vhint{font-size:12.5px;color:var(--mut);line-height:1.5}
+.vex{font-size:12.5px;background:#f6f8fb;border-radius:9px;padding:8px 11px;color:#4a5568;cursor:pointer}
+.vex:hover{background:var(--pri-l)}
+.vlist{display:flex;flex-direction:column;gap:6px}
+.vrow{display:flex;justify-content:space-between;gap:10px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:13px}
+.vrow .dose{color:var(--pri);font-weight:600;white-space:nowrap}
+.vrow.va{border-color:#9fd9bf;background:#f1faf6}.vrow.vm{border-color:#f3cf8f;background:#fff8ec}.vrow.vd{border-color:#f0b4b4;background:#fdf1f1;text-decoration:line-through;opacity:.8}
+.vtag{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:99px;margin-right:6px}
+.va .vtag{background:#1f9d6b;color:#fff}.vm .vtag{background:#e8900c;color:#fff}.vd .vtag{background:#d64545;color:#fff}
+@media (max-width:640px){
+  .logo span{display:none}.top{gap:10px;padding:0 10px}.sync{display:none}
+  .main{padding:12px 10px 40px}.ph h1{font-size:17px}
+  .cal{overflow-x:auto}.cal-h,.cal-w{min-width:900px}
+  .mod-b{padding:14px}.exr,.exr-h{grid-template-columns:18px 1fr 44px 54px 60px 50px 24px}
+  .ov{padding:10px 6px}
+}
+@media (max-width:900px){
+  .body{grid-template-columns:1fr}
+  .side{max-height:200px}
+  .pv{grid-template-columns:1fr}
+  .g4{grid-template-columns:1fr 1fr}.g3,.g2{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="logo"><div class="mk">✚</div><span>Cabinet Moutiers sur Lay</span></div>
+    <nav class="tabs" id="tabs">
+      <a href="#calendrier" data-v="calendrier">📅 Calendrier</a>
+      <a href="#exercices" data-v="exercices">🏋️ Exercices</a>
+      <a href="#suivi" data-v="suivi">📈 Suivi</a>
+      <a href="#patient" data-v="patient">📱 Vue patient</a>
+    </nav>
+    <div class="sync" id="sync"><b></b>Connexion…</div>
+  </header>
+  <div class="body">
+    <aside class="side">
+      <div class="side-h">
+        <div class="row"><h3>Patients</h3><button class="btn sm p" id="addP">+ Patient</button></div>
+        <input class="search" id="q" placeholder="Rechercher un patient…">
+      </div>
+      <div class="plist" id="plist"></div>
+      <div class="side-f" id="sidef"></div>
+    </aside>
+    <main class="main" id="main"></main>
+  </div>
+</div>
+<div id="modalRoot"></div>
+
+<script>
+/* ---------- Utilitaires ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const uid = () => Math.random().toString(36).slice(2, 10);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const iso = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return iso(d); };
+const diffDays = (a, b) => Math.round((parse(b) - parse(a)) / 864e5);
+const mondayOf = s => { const d = parse(s); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return iso(d); };
+const today = () => iso(new Date());
+const JOURS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+const MOIS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const fdate = s => { const d = parse(s); return d.getDate() + ' ' + MOIS[d.getMonth()]; };
+const fdateL = s => { const d = parse(s); return ['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'][d.getDay()] + ' ' + d.getDate() + ' ' + MOIS[d.getMonth()]; };
+const COLORS = ['#2f6fdf', '#1f9d6b', '#e8900c', '#8b5cf6', '#d64545', '#0ea5b7', '#c2410c', '#475569'];
+const AVC = ['#2f6fdf', '#0ea5b7', '#8b5cf6', '#1f9d6b', '#c2410c', '#db2777', '#475569'];
+const RDV_T = {
+  test: { l: 'Test / bilan', i: '📊', c: '#8b5cf6', ph: 'ex. Test isocinétique genoux' },
+  chirurgie: { l: 'Chirurgie', i: '🏥', c: '#d64545', ph: 'ex. Ligamentoplastie LCA' },
+  medecin: { l: 'Médecin', i: '🩺', c: '#0ea5b7', ph: 'ex. Consultation chirurgien / médecin du sport' },
+  imagerie: { l: 'Imagerie', i: '🩻', c: '#475569', ph: 'ex. IRM genou droit' },
+  autre: { l: 'Autre', i: '📌', c: '#e8900c', ph: 'ex. Reprise du travail, compétition…' },
+};
+const jx = d => { const n = diffDays(today(), d); return n === 0 ? ['J', "aujourd'hui"] : n > 0 ? ['J-' + n, n === 1 ? 'demain' : 'dans ' + n + ' j'] : ['J+' + (-n), 'passé']; };
+const LIEUX = { cabinet: 'Cabinet', domicile: 'Auto-exercice', bilan: 'Bilan / test' };
+const lvl = v => v >= 6 ? 2 : v >= 4 ? 1 : 0;
+
+/* ---------- Bibliothèque d'exercices par défaut ---------- */
+const DEFAULT_EX = [
+  ['Squat poids du corps', 'Renforcement', 'Pieds largeur de hanches, descente contrôlée 3 s, genoux dans l\'axe.', 3, '12', '', '60 s'],
+  ['Spanish squat (élastique)', 'Renforcement', 'Élastique derrière les genoux, tronc vertical, isométrie 45 s.', 5, '45 s', '', '60 s'],
+  ['Fente avant', 'Renforcement', 'Grand pas, genou arrière vers le sol, buste droit.', 3, '10/côté', '', '60 s'],
+  ['Step-down excentrique', 'Renforcement', 'Sur marche de 15–20 cm, descente lente 3–4 s, contrôle du valgus.', 3, '10/côté', '', '60 s'],
+  ['Pont fessier unipodal', 'Renforcement', 'Bassin aligné, tenir 2 s en haut.', 3, '12/côté', '', '45 s'],
+  ['Leg extension isométrique 70°', 'Renforcement', 'Contraction maximale tolérée, douleur ≤ 3/10.', 5, '45 s', '', '2 min'],
+  ['Mollets excentriques (Alfredson)', 'Renforcement', 'Monter sur 2 pieds, descendre sur 1 pied en 3 s, genou tendu puis fléchi.', 3, '15', '', '60 s'],
+  ['Nordic hamstring', 'Renforcement', 'Descente la plus lente possible, retour avec les mains.', 3, '6', '', '90 s'],
+  ['Copenhagen adducteurs', 'Renforcement', 'Gainage latéral, jambe du dessus sur banc. Version genou fléchi pour débuter.', 3, '20 s/côté', '', '60 s'],
+  ['Clamshell élastique', 'Renforcement', 'Couché sur le côté, pieds joints, ouverture du genou sans rotation du bassin.', 3, '15/côté', '', '45 s'],
+  ['Gainage ventral', 'Gainage', 'Alignement épaules-bassin-chevilles, respiration libre.', 3, '40 s', '', '30 s'],
+  ['Gainage latéral', 'Gainage', 'Appui avant-bras, bassin haut.', 3, '30 s/côté', '', '30 s'],
+  ['Dead bug', 'Gainage', 'Lombaires plaquées au sol, mouvements alternés lents.', 3, '10/côté', '', '30 s'],
+  ['Équilibre unipodal yeux fermés', 'Proprioception', 'Sur sol puis surface instable.', 3, '30 s/côté', '', '30 s'],
+  ['Star excursion (Y-balance)', 'Proprioception', 'Atteindre les 3 directions sans poser le pied.', 3, '5/direction', '', '45 s'],
+  ['Sauts pogo', 'Pliométrie', 'Rebonds courts sur l\'avant-pied, contact au sol bref.', 3, '20', '', '90 s'],
+  ['Sauts latéraux', 'Pliométrie', 'Réception stable et silencieuse.', 3, '10/côté', '', '90 s'],
+  ['Mobilité hanche 90/90', 'Mobilité', 'Transitions lentes, buste droit.', 2, '8/côté', '', '30 s'],
+  ['Étirement fléchisseurs de hanche', 'Mobilité', 'Fente basse, rétroversion du bassin.', 2, '45 s/côté', '', '15 s'],
+  ['Mobilité cheville genou-mur', 'Mobilité', 'Talon au sol, genou vers le mur.', 2, '12/côté', '', '15 s'],
+  ['Rotation externe épaule élastique', 'Renforcement', 'Coude au corps, serviette sous le bras.', 3, '15', '', '45 s'],
+  ['Y-T-W au sol', 'Renforcement', 'Allongé ventre, pouces vers le ciel.', 3, '8 de chaque', '', '45 s'],
+  ['Vélo / home-trainer facile', 'Cardio', 'Zone 1–2, cadence 85–95 rpm.', 1, '20 min', '', ''],
+  ['Course à pied progressive', 'Retour au sport', 'Alterner marche/course selon protocole, douleur ≤ 3/10.', 1, '20 min', '', ''],
+].map(([nom, categorie, consignes, series, reps, charge, repos]) => ({ id: 'ex_' + nom.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 14) + series, nom, categorie, consignes, series, reps, charge, repos }));
+const CATS = ['Renforcement', 'Mobilité', 'Course à pied'];
+const guessCat = n => { n = norm(n); return /footing|course|courir|jog|velo|home.?trainer|fractionne|marche|natation|elliptique/.test(n) ? 'Course à pied' : /etire|mobilit|souplesse|stretch|assoupli/.test(n) ? 'Mobilité' : 'Renforcement'; };
+const isVelo = e => /v[eé]lo|home.?trainer/i.test(e.nom || '');
+const CAT_MAP = { Gainage: 'Renforcement', Proprioception: 'Renforcement', 'Pliométrie': 'Renforcement', Cardio: 'Course à pied', 'Retour au sport': 'Course à pied' };
+const FOOT = [5, 10, 15, 20, 25, 30, 35, 40].map(n => ({ id: 'ex_footing_' + n, nom: `Footing ${n}'`, categorie: 'Course à pied', sous: 'Footing', consignes: 'Footing continu à allure facile : aisance respiratoire, capable de parler. Terrain plat et souple si possible. Douleur ≤ 3/10 pendant et le lendemain.', series: 1, reps: n + ' min', charge: '', repos: '' }));
+const NEW_EX = [
+  ...FOOT,
+  { id: 'ex_fractionne_cdc', nom: 'Fractionné marche / course', categorie: 'Course à pied', sous: 'Reprise', consignes: 'C = course à vitesse de jogging régulier, M = marche régulière. 5 min de marche au début et à la fin. Surface plate, ferme et irrégulière (type cross-country).', series: 5, reps: "1' C / 1' M", charge: '', repos: '' },
+  { id: 'ex_mob_chatvache', nom: 'Chat-vache (mobilité rachis)', categorie: 'Mobilité', consignes: 'À quatre pattes, enrouler puis creuser le dos lentement, avec la respiration.', series: 2, reps: '10', charge: '', repos: '15 s' },
+  { id: 'ex_mob_thoracique', nom: 'Rotation thoracique (open book)', categorie: 'Mobilité', consignes: 'Couché sur le côté, genoux fléchis, ouvrir le bras en suivant la main du regard.', series: 2, reps: '10/côté', charge: '', repos: '15 s' },
+  { id: 'ex_mob_couch', nom: 'Couch stretch (quadriceps / psoas)', categorie: 'Mobilité', consignes: 'Genou contre le mur, rétroversion du bassin, buste progressivement vertical.', series: 2, reps: '45 s/côté', charge: '', repos: '15 s' },
+  { id: 'ex_mob_ischio', nom: 'Mobilité ischio-jambiers dynamique', categorie: 'Mobilité', consignes: 'Balancés de jambe contrôlés ou extension de genou en position assise, sans douleur.', series: 2, reps: '12/côté', charge: '', repos: '15 s' },
+  { id: 'ex_mob_wgs', nom: "World's greatest stretch", categorie: 'Mobilité', consignes: 'Fente, coude vers la cheville, puis rotation du buste bras vers le ciel.', series: 2, reps: '6/côté', charge: '', repos: '15 s' },
+  { id: 'ex_mob_epaule', nom: 'Mobilité épaule au bâton', categorie: 'Mobilité', consignes: 'Passages avant-arrière bras tendus, prise large, sans compensation lombaire.', series: 2, reps: '10', charge: 'bâton', repos: '15 s' },
+  { id: 'ex_mob_mollet', nom: 'Étirement mollet / soléaire au mur', categorie: 'Mobilité', consignes: 'Jambe arrière tendue puis genou fléchi, talon au sol.', series: 2, reps: '30 s/côté', charge: '', repos: '15 s' },
+];
+function migrate() {
+  if ((S.v || 1) >= 3) return;
+  if ((S.v || 1) >= 2) { S.exercices.forEach(e => { if (e.categorie === 'Autre' || !CATS.includes(e.categorie)) { e.categorie = isVelo(e) ? 'Course à pied' : guessCat(e.nom); if (isVelo(e)) e.sous = 'Vélo'; } }); S.v = 3; return; }
+  S.exercices.forEach(e => { if (CAT_MAP[e.categorie]) { e.sous = e.sous || e.categorie; e.categorie = CAT_MAP[e.categorie]; } });
+  NEW_EX.forEach(n => { if (!S.exercices.some(e => e.id === n.id)) S.exercices.push({ ...n }); });
+  S.v = 2; migrate();
+}
+/* Programmes de reprise de la course — La Clinique Du Coureur (programmes fractionnés) */
+const RUN_PROG = {
+  cdc1: { nom: 'Programme fractionné I – La Clinique Du Coureur', court: 'Fractionné I', desc: 'Reprise après blessure · 40 séances sur ~8 semaines, jusqu\'à 30 min continues',
+    seq: [[3,1],[4,1],[5,1],[6,1],[7,1],[8,1],[9,1],[10,1],[11,1],[12,1],[13,1],[14,1],[15,1],[3,2],[4,2],[5,2],[6,2],[7,2],[8,2],[9,2],[10,2],[3,3],[4,3],[5,3],[6,3],[7,3],[8,3],[2,4],[3,4],[4,4],[5,4],[6,4],[1,9],[2,9],[3,9],[1,14],[2,14],[0,20],[0,25],[0,30]] },
+  cdc2: { nom: 'Programme fractionné II – La Clinique Du Coureur', court: 'Fractionné II', desc: 'Reprise après une coupure (« off season ») · 15 séances sur ~3 semaines, jusqu\'à 30 min continues',
+    seq: [[5,1],[7,1],[10,1],[12,1],[15,1],[7,2],[10,2],[5,3],[7,3],[4,4],[6,4],[2,9],[3,9],[2,14],[0,30]] },
+};
+const RUN_RULES = ["Débuter et terminer chaque sortie par 5 min de marche.", "Selon les symptômes et le confort : reprendre l'entraînement précédent, répéter le même, ou sauter 1 à 2 entraînements.", "Courir au minimum 4 fois et au maximum 6 fois par semaine.", "Surface plate, ferme et irrégulière (type cross-country), sans côte.", "Compléter avec un exercice de transfert moins stressant mécaniquement (vélo, aquajogging)."];
+const runTxt = ([n, c]) => n ? `${n}x (${c}' C / 1' M)` : `${c}' continu`;
+const runDur = ([n, c]) => 10 + (n ? n * (c + 1) : c);
+
+/* ---------- État ---------- */
+const blank = () => { const b = { v: 2, patients: [], cycles: [], exercices: DEFAULT_EX.map(e => ({ ...e, sous: CAT_MAP[e.categorie] ? e.categorie : undefined, categorie: CAT_MAP[e.categorie] || e.categorie })).concat(NEW_EX.map(e => ({ ...e }))), seances: [], questionnaires: [], rdv: [] }; b.exercices.forEach(e => { if (!CATS.includes(e.categorie)) e.categorie = guessCat(e.nom); if (isVelo(e)) { e.categorie = 'Course à pied'; e.sous = 'Vélo'; } }); b.v = 3; return b; };
+let S = blank();
+const SMALL = window.innerWidth < 700;
+const UI = { view: 'calendrier', pid: null, start: SMALL ? mondayOf(today()) : addDays(mondayOf(today()), -7), weeks: SMALL ? 1 : 4, exq: '', excat: '', pq: '', suiviDays: 42, done: {} };
+let store = { mode: 'init', ref: null, ready: false };
+let saveT = null, saving = false, pending = false, dirty = false, lastJson = '';
+
+function loadLocal() { try { const t = localStorage.getItem('pe_cabinet_v1'); if (t) return JSON.parse(t); } catch (e) {} return null; }
+function saveLocal() { try { localStorage.setItem('pe_cabinet_v1', JSON.stringify(S)); } catch (e) {} }
+
+function save() {
+  saveLocal();
+  if (store.mode !== 'db' || !store.ready) return;
+  dirty = true;
+  clearTimeout(saveT);
+  saveT = setTimeout(flush, 700);
+}
+const backupRef = k => store.col.doc('sauvegarde-' + k);
+// Enregistrer immédiatement si on quitte / ferme l'appli
+const flushNow = () => { if (dirty && store.mode === 'db' && store.ready) { clearTimeout(saveT); flush(); } };
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushNow(); });
+window.addEventListener('pagehide', flushNow);
+/* ---------- Version page internet : données sur cet appareil ---------- */
+const PAGE = { cabinet: 'Cabinet Moutiers sur Lay' };
+function localReady() {
+  try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
+  const last = S.derniereSauvegarde;
+  if (S.patients.length && (!last || diffDays(last, today()) >= 7)) setSync('⚠ Pensez à exporter une sauvegarde', 'loc');
+  else setSync('Enregistré sur cet appareil', 'ok');
+}
+const b64u = bytes => { let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+const unb64u = s => { const b = atob(s.replace(/-/g, '+').replace(/_/g, '/')); const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; };
+async function packData(obj) {
+  const json = new TextEncoder().encode(JSON.stringify(obj));
+  if ('CompressionStream' in window) { const buf = await new Response(new Blob([json]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer(); return 'z' + b64u(new Uint8Array(buf)); }
+  return 'j' + b64u(json);
+}
+function patientPayload(p) {
+  const t = today(), end = addDays(t, 7 * ((S.reglages && +S.reglages.semaines) || 4));
+  const exList = [], exPos = {};
+  const ses = sesOf(p.id).filter(s => s.lieu === 'domicile' && s.date >= addDays(t, -2) && s.date <= end).sort((a, b) => a.date.localeCompare(b.date))
+    .map(s => ({ i: s.id, d: s.date, t: s.titre || 'Séance', m: s.duree || '', n: s.notes || '', f: s.statut === 'faite' ? 1 : 0,
+      x: (s.items || []).map(it => { if (!(it.exId in exPos)) { const e = EX(it.exId) || {}; exPos[it.exId] = exList.length; exList.push([e.nom || '?', e.consignes || '']); } return [exPos[it.exId], it.series ?? '', it.reps ?? '', it.charge || '', it.repos || '', it.note || '']; }) }));
+  const qs = sesOf(p.id).filter(s => s.date >= addDays(t, -3) && s.date <= end && s.statut !== 'manquee' && !qForSes(s.id)).map(s => [s.id, s.date, s.titre || 'Séance']);
+  const rv = rdvOf(p.id).filter(r => r.date >= t).slice(0, 5).map(r => [r.type, r.titre || '', r.date, r.heure || '', r.lieu || '']);
+  const rg = S.reglages || {};
+  return { v: 1, c: PAGE.cabinet, p: p.prenom || '', g: t, k: { tel: rg.tel || '', mail: rg.mail || '' }, e: exList, s: ses, q: qs, r: rv };
+}
+async function patientLink(p) { return new URL('patient.html', location.href).href + '#' + await packData(patientPayload(p)); }
+function linkPanel(m, d) {
+  const box = $('#plink', m); if (!box) return;
+  box.innerHTML = `<div style="flex:1;min-width:220px">Le programme d'auto-exercices des ${(S.reglages && S.reglages.semaines) || 4} prochaines semaines est rangé dans le lien : aucune donnée n'est stockée en ligne. Renvoyez un lien après chaque changement.</div><button class="btn sm p" id="mkl">Créer le lien patient</button>`;
+  $('#mkl', box).onclick = async () => {
+    const i = S.patients.findIndex(x => x.id === d.id); const p = i >= 0 ? S.patients[i] : d;
+    const url = await patientLink(p);
+    const msg = `Bonjour ${p.prenom || ''}, voici votre programme d'exercices : ${url}`;
+    const tel = (p.tel || '').replace(/[^\d+]/g, '');
+    box.innerHTML = `<div style="flex:1;min-width:220px"><div class="dict"><input id="lnk" readonly value="${esc(url)}"><button class="btn sm" id="cp">Copier</button></div>
+      <div class="ctl" style="margin-top:8px"><a class="btn sm p" href="sms:${esc(tel)}?&body=${encodeURIComponent(msg)}">📱 Envoyer par SMS</a><a class="btn sm" href="mailto:${esc(p.email || '')}?subject=${encodeURIComponent('Votre programme d\'exercices')}&body=${encodeURIComponent(msg)}">✉️ Par e-mail</a></div>
+      <div class="vhint" style="margin-top:6px">Lien personnel : ne l'envoyez qu'à ${esc(p.prenom || 'ce patient')}. Ses retours vous arriveront par SMS ou e-mail : collez-les dans « 📩 Retours patients ».</div></div>`;
+    $('#cp', box).onclick = async () => { const l = $('#lnk', box); try { await navigator.clipboard.writeText(l.value); toast('Lien copié'); } catch (e) { l.select(); document.execCommand('copy'); toast('Lien copié'); } };
+  };
+}
+function retourModal() {
+  modal({ title: '📩 Retours patients', body: `<div class="vhint">Collez ici le message reçu d'un patient (SMS ou e-mail), tel quel. L'appli lit le code en fin de message et ajoute sa douleur, son commentaire ou son questionnaire au bon endroit. Vous pouvez coller plusieurs messages à la fois.</div>
+    <textarea id="rt" style="width:100%;min-height:150px;border:1px solid var(--line);border-radius:9px;padding:10px" placeholder="Retour séance « … » : douleur 3/10 … [code R1.…]"></textarea><div id="rres" class="vhint"></div>`,
+    foot: `<div class="sp"></div><button class="btn" data-close>Fermer</button><button class="btn p" id="ok">Ajouter</button>`,
+    mount: m => { $('#rt', m).focus(); $('#ok', m).onclick = () => {
+      const codes = [...$('#rt', m).value.matchAll(/R1\.([A-Za-z0-9_-]{8,})/g)].map(x => x[1]);
+      if (!codes.length) { $('#rres', m).innerHTML = '<span style="color:var(--bad)">Aucun code trouvé. Collez le message en entier, code compris.</span>'; return; }
+      const out = [];
+      codes.forEach(c => {
+        let r; try { r = JSON.parse(new TextDecoder().decode(unb64u(c))); } catch (e) { out.push('❌ code illisible'); return; }
+        const s = S.seances.find(x => x.id === r.s); if (!s) { out.push('❌ séance introuvable (supprimée ?)'); return; }
+        const who = (P(s.patientId) || {}).prenom || '';
+        if (r.k === 'v') { Object.assign(s, { statut: 'faite', douleurPatient: clamp(r.d), commentairePatient: String(r.c || '').slice(0, 1000), valideLe: r.at || today() }); out.push(`✅ ${esc(who)} · ${esc(s.titre)} : douleur ${clamp(r.d)}/10`); }
+        else if (r.k === 'q') {
+          if (qForSes(s.id)) { out.push(`ℹ️ ${esc(who)} · questionnaire déjà enregistré`); return; }
+          S.questionnaires.push({ id: uid(), seanceId: s.id, patientId: s.patientId, date: r.at || addDays(s.date, 1), douleur: clamp(r.d), courbatures: clamp(r.co), fatigue: clamp(r.fa), sommeil: ['bon', 'moyen', 'mauvais'].includes(r.so) ? r.so : 'bon', gonflement: 'non', commentaire: String(r.c || '').slice(0, 1000) });
+          if (s.statut === 'prevue') s.statut = 'faite';
+          out.push(`✅ ${esc(who)} · questionnaire du lendemain (${esc(s.titre)})`);
+        }
+      });
+      save(); render(); $('#rres', m).innerHTML = out.join('<br>'); $('#rt', m).value = '';
+    }; } });
+}
+const clamp = v => Math.max(0, Math.min(10, Math.round(+v || 0)));
+function reglagesModal() {
+  const r = S.reglages || {};
+  modal({ title: '⚙️ Réglages', body: `<div class="vhint">Ces coordonnées sont mises dans les liens patients pour qu'ils puissent vous envoyer leurs retours en un clic.</div>
+    <div class="fr"><div class="f"><label>Votre téléphone portable (SMS des patients)</label><input id="gT" value="${esc(r.tel || '')}" placeholder="06 12 34 56 78"></div><div class="f"><label>Votre e-mail</label><input id="gM" type="email" value="${esc(r.mail || '')}"></div></div>
+    <div class="f"><label>Programme envoyé dans le lien patient</label><select id="gS" class="sel-p">${[2, 3, 4, 6, 8].map(n => `<option value="${n}" ${(+r.semaines || 4) === n ? 'selected' : ''}>${n} prochaines semaines</option>`).join('')}</select></div>`,
+    foot: `<div class="sp"></div><button class="btn" data-close>Annuler</button><button class="btn p" id="ok">Enregistrer</button>`,
+    mount: m => $('#ok', m).onclick = () => { S.reglages = { tel: $('#gT', m).value.trim(), mail: $('#gM', m).value.trim(), semaines: +$('#gS', m).value }; save(); closeModal(); toast('Réglages enregistrés'); } });
+}
+function localBackupModal() {
+  modal({ title: '💾 Sauvegarde', body: `<div class="vhint">Vos données sont enregistrées <b>uniquement dans ce navigateur, sur cet appareil</b>. Exportez une sauvegarde chaque semaine et gardez le fichier en lieu sûr (clé USB, disque de l'ordinateur). Le même fichier permet de retrouver vos données sur un autre appareil.</div>
+    <div class="vhint">Dernière sauvegarde : <b>${S.derniereSauvegarde ? fdateL(S.derniereSauvegarde) : 'jamais'}</b></div>
+    <div class="ctl"><button class="btn p" id="exp">📤 Exporter une sauvegarde</button><label class="btn" style="cursor:pointer">📥 Importer une sauvegarde<input type="file" id="imp" accept=".json,application/json" style="display:none"></label></div><div id="bres" class="vhint"></div>`,
+    foot: '<button class="btn" data-close>Fermer</button>',
+    mount: m => {
+      $('#exp', m).onclick = () => {
+        S.derniereSauvegarde = today(); saveLocal();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S)], { type: 'application/json' }));
+        a.download = `cabinet-sauvegarde-${today()}.json`; document.body.appendChild(a); a.click(); a.remove();
+        localReady(); $('#bres', m).textContent = '✅ Fichier téléchargé (dossier Téléchargements).';
+      };
+      $('#imp', m).onchange = async e => {
+        const f = e.target.files[0]; if (!f) return;
+        try { const data = JSON.parse(await f.text()); if (!Array.isArray(data.patients)) throw 0;
+          confirmBox(`Remplacer les données de cet appareil par la sauvegarde « ${f.name} » (${data.patients.length} patient(s)) ?`, () => { S = Object.assign(blank(), data); migrate(); UI.pid = null; save(); render(); toast('Sauvegarde importée'); }, 'Importer');
+        } catch (err) { $('#bres', m).innerHTML = '<span style="color:var(--bad)">Fichier non reconnu.</span>'; }
+      };
+    } });
+}
+async function backupModal() {
+  if (store.mode === 'local') return localBackupModal();
+  if (store.mode !== 'db' || !store.col) return modal({ title: '💾 Sauvegardes', body: '<p style="margin:0">Les sauvegardes sont disponibles quand l\'appli est synchronisée avec votre compte (voyant « Synchronisé » en haut à droite).</p>', foot: '<button class="btn" data-close>Fermer</button>' });
+  modal({ title: '💾 Sauvegardes automatiques', body: '<div class="vhint">Chargement…</div>', foot: '<button class="btn" data-close>Fermer</button>' });
+  const keys = [...Array(14).keys()].map(String).concat(['avant-restauration']);
+  const res = await Promise.all(keys.map(k => backupRef(k).get().then(sn => { const d = sn && typeof sn.data === 'function' ? sn.data() : sn; return d && d.json ? { k, ...d } : null; }).catch(() => null)));
+  const list = res.filter(Boolean).sort((a, b) => b.at - a.at);
+  const info = j => { try { const x = JSON.parse(j); return `${x.patients.length} patient(s) · ${x.seances.length} séance(s) · ${x.questionnaires.length} réponse(s)`; } catch (e) { return ''; } };
+  const b = $('.mod-b'); if (!b) return;
+  b.innerHTML = `<div class="vhint">Vos données s'enregistrent <b>automatiquement à chaque modification</b>. En plus, une copie complète est faite <b>chaque jour</b> et conservée <b>14 jours</b>. En cas d'erreur (patient supprimé par mégarde…), restaurez une copie : l'état actuel est lui-même sauvegardé avant.</div>
+    <div class="vlist">${list.map(x => `<div class="vrow"><span><b>${x.k === 'avant-restauration' ? 'Avant la dernière restauration' : fdateL(x.date)}</b><br><span class="vhint">${new Date(x.at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} · ${info(x.json)}</span></span><button class="btn sm" data-bk="${x.k}">Restaurer</button></div>`).join('') || '<div class="vhint">Aucune copie pour l\'instant : la première sera faite aujourd\'hui à la prochaine modification.</div>'}</div>`;
+  $$("[data-bk]", b).forEach(btn => btn.onclick = () => {
+    const x = list.find(y => y.k === btn.dataset.bk);
+    confirmBox(`Restaurer la copie du ${fdateL(x.date)} ? Les modifications faites depuis seront remplacées (l'état actuel est sauvegardé avant).`, async () => {
+      try { await backupRef('avant-restauration').set({ json: JSON.stringify(S), date: today(), at: Date.now() }); } catch (e) {}
+      S = Object.assign(blank(), JSON.parse(x.json)); migrate(); UI.pid = null; save(); render(); toast('Copie restaurée');
+    }, 'Restaurer');
+  });
+}
+async function flush() {
+  if (saving) { pending = true; return; }
+  saving = true; setSync('Enregistrement…', '');
+  try {
+    const json = JSON.stringify(S); lastJson = json; await store.ref.set({ json, updated: Date.now() });
+    setSync('Enregistré automatiquement', 'ok');
+    const day = today();
+    if (store.lastBackup !== day && S.patients.length) { store.lastBackup = day; backupRef(Math.floor(Date.now() / 864e5) % 14).set({ json, date: day, at: Date.now() }).catch(() => { store.lastBackup = null; }); }
+  }
+  catch (e) { setSync('Erreur d\'enregistrement', 'loc'); }
+  saving = false;
+  if (pending) { pending = false; flush(); } else dirty = false;
+}
+function setSync(t, c) { const el = $('#sync'); el.className = 'sync ' + (c || ''); el.innerHTML = '<b></b>' + esc(t); }
+
+function listenRemote() {
+  if (!store.ref || typeof store.ref.onSnapshot !== 'function') return;
+  try {
+    store.ref.onSnapshot(snap => {
+      const data = snap && typeof snap.data === 'function' ? snap.data() : snap;
+      if (!data || !data.json || data.json === lastJson || dirty || saving) return;
+      try { S = Object.assign(blank(), JSON.parse(data.json)); migrate(); } catch (e) { return; }
+      lastJson = data.json; saveLocal(); render();
+      setSync('Mis à jour depuis un autre appareil', 'ok');
+    }, () => {});
+  } catch (e) {}
+}
+async function initStore() {
+  const local = loadLocal();
+  if (local && local.patients) { S = Object.assign(blank(), local); migrate(); }
+  render();
+  let db = null, user = null;
+  try {
+    if (window.claude && window.claude.use) [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+  } catch (e) {}
+  if (!db || !user) { store.mode = 'local'; localReady(); return; }
+  try {
+    const id = await user.id();
+    store.ref = db.collection('data/users/' + id).doc('cabinet');
+    store.col = db.collection('data/users/' + id);
+    store.mode = 'db';
+    const snap = await store.ref.get();
+    const data = snap && typeof snap.data === 'function' ? snap.data() : snap;
+    if (data && data.json) {
+      lastJson = data.json;
+      const parsed = JSON.parse(data.json);
+      S = Object.assign(blank(), parsed); if ((S.v || 1) < 3) { migrate(); setTimeout(save, 0); }
+      saveLocal();
+      store.ready = true;
+      setSync('Synchronisé · sauvegarde auto', 'ok');
+      render();
+    } else {
+      store.ready = true;
+      setSync('Synchronisé (privé)', 'ok');
+      if (S.patients.length) flush();
+    }
+    listenRemote();
+  } catch (e) { store.mode = 'local'; setSync('Données sur cet appareil uniquement', 'loc'); }
+}
+
+/* ---------- Accès aux données ---------- */
+const P = id => S.patients.find(p => p.id === id);
+const EX = id => S.exercices.find(e => e.id === id);
+const sesOf = pid => S.seances.filter(s => s.patientId === pid);
+const cycOf = pid => S.cycles.filter(c => c.patientId === pid).sort((a, b) => a.debut.localeCompare(b.debut));
+const rdvOf = pid => (S.rdv || []).filter(r => r.patientId === pid).sort((a, b) => (a.date + (a.heure || '')).localeCompare(b.date + (b.heure || '')));
+const qOf = pid => S.questionnaires.filter(q => q.patientId === pid).sort((a, b) => a.date.localeCompare(b.date));
+const cycleAt = (pid, d) => cycOf(pid).find(c => c.debut <= d && d <= c.fin);
+const qForSes = sid => S.questionnaires.find(q => q.seanceId === sid);
+const initials = p => ((p.prenom || '')[0] || '') + ((p.nom || '')[0] || '');
+const fullName = p => (p.prenom || '') + ' ' + (p.nom || '');
+
+function alertFor(pid) {
+  const qs = qOf(pid); if (!qs.length) return null;
+  const last = qs[qs.length - 1], prev = qs[qs.length - 2];
+  if (last.douleur >= 6 || last.courbatures >= 7) return 'rouge';
+  if (prev && last.douleur - prev.douleur >= 2) return 'orange';
+  return null;
+}
+function pendingQuestionnaire(pid) {
+  const t = today();
+  return sesOf(pid).filter(s => s.date < t && s.date >= addDays(t, -3) && s.statut !== 'manquee' && !qForSes(s.id))
+    .sort((a, b) => b.date.localeCompare(a.date))[0] || null;
+}
+
+/* ---------- Toast & modales ---------- */
+function toast(msg) {
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2200);
+}
+function modal({ title, body, foot, wide, mount }) {
+  const root = $('#modalRoot');
+  root.innerHTML = `<div class="ov"><div class="mod ${wide ? 'wide' : ''}"><div class="mod-h"><h3>${title}</h3><button class="x" data-close>×</button></div><div class="mod-b">${body}</div><div class="mod-f">${foot || ''}</div></div></div>`;
+  const ov = $('.ov', root);
+  ov.addEventListener('mousedown', e => { if (e.target === ov) closeModal(); });
+  $$('[data-close]', root).forEach(b => b.onclick = closeModal);
+  if (mount) mount($('.mod', root));
+}
+function closeModal() { $('#modalRoot').innerHTML = ''; }
+function choiceBox(title, opts, onCancel) {
+  modal({ title, body: `<div class="choice">${opts.map((o, i) => `<button data-o="${i}" ${o.danger ? 'style="color:var(--bad)"' : ''}>${esc(o.label)}<small>${esc(o.sub || '')}</small></button>`).join('')}</div>`,
+    foot: `<button class="btn" id="cc">Retour</button>`,
+    mount: m => { $$('[data-o]', m).forEach(b => b.onclick = () => opts[+b.dataset.o].fn()); $('#cc', m).onclick = () => { closeModal(); if (onCancel) onCancel(); }; } });
+}
+function confirmBox(msg, onYes, label = 'Supprimer') {
+  modal({ title: 'Confirmer', body: `<p style="margin:0">${esc(msg)}</p>`, foot: `<button class="btn" data-close>Annuler</button><button class="btn p" id="yes" style="background:var(--bad);border-color:var(--bad)">${label}</button>`,
+    mount: m => { $('#yes', m).onclick = () => { closeModal(); onYes(); }; } });
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+/* ---------- Rendu global ---------- */
+function render() {
+  $$('#tabs a').forEach(a => a.classList.toggle('on', a.dataset.v === UI.view));
+  if (!UI.pid || !P(UI.pid)) UI.pid = S.patients[0]?.id || null;
+  renderSide();
+  const m = $('#main');
+  if (UI.view === 'exercices') return renderExercices(m);
+  if (!S.patients.length) return renderEmpty(m);
+  ({ calendrier: renderCal, suivi: renderSuivi, patient: renderPatient }[UI.view] || renderCal)(m);
+}
+function renderSide() {
+  const q = UI.pq.toLowerCase();
+  const list = S.patients.filter(p => (fullName(p) + ' ' + (p.pathologie || '')).toLowerCase().includes(q))
+    .sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
+  $('#plist').innerHTML = list.map(p => {
+    const a = alertFor(p.id), cy = cycleAt(p.id, today());
+    return `<div class="pitem ${p.id === UI.pid ? 'on' : ''}" data-p="${p.id}">
+      <div class="av" style="background:${p.couleur}">${esc(initials(p).toUpperCase())}</div>
+      <div><div class="nm">${esc(fullName(p))}</div><div class="sb">${esc(p.pathologie || '—')}</div></div>
+      ${a ? `<span class="dot ${a}" title="${a === 'rouge' ? 'Douleur ou courbatures élevées' : 'Douleur en hausse'}"></span>` : ''}
+    </div>`;
+  }).join('') || `<div class="empty" style="padding:24px 10px">Aucun patient</div>`;
+  $$('#plist .pitem').forEach(el => el.onclick = () => { UI.pid = el.dataset.p; render(); });
+  const al = S.patients.filter(p => alertFor(p.id)).length;
+  $('#sidef').innerHTML = `${S.patients.length} patient${S.patients.length > 1 ? 's' : ''}${al ? ` · <span style="color:var(--bad);font-weight:600">${al} alerte${al > 1 ? 's' : ''}</span>` : ''}
+    ${S.patients.length && UI.pid ? ` · <a href="#" id="editP" style="color:var(--pri)">Fiche patient</a>` : ''}<br><a href="#" id="bkp" style="color:var(--pri)">💾 Sauvegarde</a> · <a href="#" id="ret" style="color:var(--pri)">📩 Retours patients</a> · <a href="#" id="reg" style="color:var(--pri)">⚙️ Réglages</a>`;
+  $('#ret').onclick = e => { e.preventDefault(); retourModal(); };
+  $('#reg').onclick = e => { e.preventDefault(); reglagesModal(); };
+  $('#bkp').onclick = e => { e.preventDefault(); backupModal(); };
+  const ep = $('#editP'); if (ep) ep.onclick = e => { e.preventDefault(); patientModal(P(UI.pid)); };
+}
+function renderEmpty(m) {
+  m.innerHTML = `<div class="empty"><h2>Bienvenue 👋</h2><p>Ajoutez votre premier patient pour commencer à planifier ses cycles et ses séances.</p>
+  <div class="ctl" style="justify-content:center;margin-top:16px"><button class="btn p" id="e1">+ Ajouter un patient</button><button class="btn" id="e2">Charger un exemple (patients fictifs)</button></div></div>`;
+  $('#e1').onclick = () => patientModal();
+  $('#e2').onclick = loadDemo;
+}
+function patientHeader(extra = '') {
+  const p = P(UI.pid), cy = cycleAt(p.id, today());
+  return `<div class="ph"><div class="av" style="background:${p.couleur};width:42px;height:42px;font-size:15px">${esc(initials(p).toUpperCase())}</div>
+    <div><h1>${esc(fullName(p))}</h1><div class="meta">${esc(p.pathologie || '')}${p.objectif ? ' · Objectif : ' + esc(p.objectif) : ''}</div></div>
+    ${cy && UI.view === 'calendrier' ? `<span class="chip" style="background:${cy.couleur}22;color:${cy.couleur}">● ${esc(cy.nom)} · jusqu'au ${fdate(cy.fin)}</span>` : ''}
+    <div class="sp"></div>${extra}</div>`;
+}
+
+/* ---------- Calendrier ---------- */
+function renderCal(m) {
+  const p = P(UI.pid), t = today();
+  const end = addDays(UI.start, UI.weeks * 7 - 1);
+  const ctl = `<div class="ctl">
+    <button class="btn ic" id="prev">‹</button><button class="btn" id="tod">Aujourd'hui</button><button class="btn ic" id="next">›</button>
+    <span class="rng">${fdate(UI.start)} – ${fdate(end)} ${parse(end).getFullYear()}</span>
+    <div class="seg" id="wk">${[1, 2, 4, 6].map(n => `<button data-n="${n}" class="${UI.weeks === n ? 'on' : ''}">${n} sem.</button>`).join('')}</div>
+    <select class="sel-p" id="tpl" style="max-width:170px"><option value="">Modèle de cycles…</option><optgroup label="Cycles de rééducation">${Object.keys(CYCLE_TPL).map(k => `<option>${esc(k)}</option>`).join('')}</optgroup><optgroup label="Reprise course (Clinique Du Coureur)">${Object.entries(RUN_PROG).map(([k, P]) => `<option value="run:${k}">${esc(P.court)} · ${P.seq.length} séances</option>`).join('')}</optgroup></select>
+    <button class="btn" id="addC">+ Cycle</button><button class="btn" id="addR">+ RDV / test</button><button class="btn p" id="addS">+ Séance</button></div>`;
+  const rv = rdvOf(p.id), up = rv.filter(r => r.date >= t), past = rv.filter(r => r.date < t).slice(-2);
+  const rcard = r => { const T = RDV_T[r.type] || RDV_T.autre, [j, sub] = jx(r.date); return `<div class="rdvc ${r.date < t ? 'past' : ''}" data-r="${r.id}" style="border-left-color:${T.c}">
+    <div class="jx" style="background:${T.c}18;color:${T.c}">${j}<small>${sub}</small></div>
+    <div><div class="tt">${T.i} ${esc(r.titre || T.l)}</div><div class="dd">${T.l} · ${fdateL(r.date)}${r.heure ? ' · ' + esc(r.heure) : ''}${r.lieu ? ' · ' + esc(r.lieu) : ''}</div></div></div>`; };
+  const rdvPanel = `<div class="rdvp"><div class="rdvp-h"><h2>📌 Rendez-vous &amp; tests prévus</h2><span class="meta" style="color:var(--mut);font-size:12px">${up.length} à venir</span><div class="sp"></div><button class="btn sm" id="addR2">+ Ajouter</button></div>
+    <div class="rdvl">${up.length || past.length ? past.map(rcard).join('') + up.map(rcard).join('') : '<div style="color:var(--mut);font-size:13px">Aucun rendez-vous ni test programmé. Ajoutez un test, une consultation chirurgien/médecin ou un examen d\'imagerie pour suivre le compte à rebours.</div>'}</div></div>`;
+  let h = patientHeader() + rdvPanel + `<div class="ph" style="margin-top:-4px">${ctl}</div><div class="cal"><div class="cal-h">${JOURS.map(j => `<div>${j}</div>`).join('')}<div>Semaine</div></div>`;
+  for (let w = 0; w < UI.weeks; w++) {
+    const ws = addDays(UI.start, w * 7);
+    h += `<div class="cal-w">`;
+    let nb = 0, nbF = 0, dur = 0, qs = [];
+    for (let d = 0; d < 7; d++) {
+      const day = addDays(ws, d);
+      const cy = cycleAt(p.id, day);
+      const ses = sesOf(p.id).filter(s => s.date === day);
+      const qd = S.questionnaires.filter(q => q.patientId === p.id && q.date === day);
+      ses.forEach(s => { nb++; if (s.statut === 'faite') nbF++; dur += +s.duree || 0; });
+      qs.push(...qd);
+      const showName = cy && (day === cy.debut || d === 0);
+      h += `<div class="day ${day === t ? 'today' : ''} ${day < t ? 'past' : ''}" data-d="${day}">
+        <div class="dnum"><span>${parse(day).getDate()}${parse(day).getDate() === 1 || (w === 0 && d === 0) ? ' ' + MOIS[parse(day).getMonth()] : ''}</span><button class="add" data-add="${day}" title="Ajouter une séance">+</button></div>
+        <div class="cyc ${cy ? '' : 'none'}" ${cy ? `style="background:${cy.couleur}" data-cy="${cy.id}" title="${esc(cy.nom)} – ${esc(cy.objectif || '')}"` : ''}>${showName ? esc(cy.nom) : ''}</div>
+        ${rv.filter(r => r.date === day).map(r => { const T = RDV_T[r.type] || RDV_T.autre; return `<div class="evt" data-r="${r.id}" style="background:${T.c}" title="${esc(T.l)}${r.notes ? ' – ' + esc(r.notes) : ''}">${T.i} <span>${esc(r.titre || T.l)}${r.heure ? ' · ' + esc(r.heure) : ''}</span></div>`; }).join('')}
+        ${ses.map(s => sesCard(s)).join('')}
+        ${qd.map(q => `<div class="q lv${lvl(Math.max(q.douleur, q.courbatures))}" data-q="${q.id}" title="Questionnaire J+1">📝 Douleur ${q.douleur} · Courb. ${q.courbatures}</div>`).join('')}
+        ${ses.filter(s => s.date < t && s.statut !== 'manquee' && !qForSes(s.id) && addDays(s.date, 1) <= t).map(s => `<div class="q wait" data-qs="${s.id}">⏳ Questionnaire J+1 en attente</div>`).join('')}
+      </div>`;
+    }
+    const avgD = qs.length ? (qs.reduce((a, q) => a + q.douleur, 0) / qs.length).toFixed(1) : '–';
+    const avgC = qs.length ? (qs.reduce((a, q) => a + q.courbatures, 0) / qs.length).toFixed(1) : '–';
+    const wc = cycleAt(p.id, addDays(ws, 3));
+    h += `<div class="wk">
+      <div class="l">${wc ? `<span style="color:${wc.couleur};font-weight:600">${esc(wc.nom)}</span>` : 'Hors cycle'}</div>
+      <div><b>${nbF}/${nb}</b> <span class="l">séances faites</span></div>
+      <div class="bar"><i style="width:${nb ? nbF / nb * 100 : 0}%"></i></div>
+      <div><b>${Math.floor(dur / 60) ? Math.floor(dur / 60) + ' h ' : ''}${dur % 60} min</b> <span class="l">planifiées</span></div>
+      <div class="l">Douleur moy. <b class="${avgD !== '–' ? '' : ''}">${avgD}</b> · Courb. <b>${avgC}</b></div>
+    </div></div>`;
+  }
+  h += `</div><div class="legend"><span><i style="background:var(--cab)"></i>Séance cabinet</span><span><i style="background:var(--dom)"></i>Auto-exercice prescrit</span><span><i style="background:var(--bil)"></i>Bilan / test</span>
+    <span>📌 Rendez-vous / test</span><span>📝 Réponse du patient (vert &lt; 4 · orange 4–5 · rouge ≥ 6)</span><span>Glissez-déposez une séance pour la déplacer</span></div>`;
+  m.innerHTML = h;
+  $('#prev').onclick = () => { UI.start = addDays(UI.start, -7 * Math.max(1, Math.floor(UI.weeks / 2))); render(); };
+  $('#next').onclick = () => { UI.start = addDays(UI.start, 7 * Math.max(1, Math.floor(UI.weeks / 2))); render(); };
+  $('#tod').onclick = () => { UI.start = UI.weeks > 1 ? addDays(mondayOf(t), -7) : mondayOf(t); render(); };
+  $$('#wk button').forEach(b => b.onclick = () => { UI.weeks = +b.dataset.n; render(); });
+  $('#addS').onclick = () => sessionModal(null, t);
+  $('#addC').onclick = () => cycleModal();
+  $('#addR').onclick = () => rdvModal(null, t);
+  $('#addR2').onclick = () => rdvModal(null, t);
+  $('#tpl').onchange = e => { const v = e.target.value; e.target.value = ''; if (!v) return; if (v.startsWith('run:')) runPlanModal(v.slice(4)); else applyTemplate(v); };
+  $$('[data-r]', m).forEach(el => el.onclick = e => { e.stopPropagation(); rdvModal(S.rdv.find(r => r.id === el.dataset.r)); });
+  $$('[data-add]', m).forEach(b => b.onclick = e => { e.stopPropagation(); sessionModal(null, b.dataset.add); });
+  $$('.ses', m).forEach(el => {
+    el.onclick = () => sessionModal(S.seances.find(s => s.id === el.dataset.s));
+    el.ondragstart = e => { e.dataTransfer.setData('text/plain', el.dataset.s); e.dataTransfer.effectAllowed = 'move'; };
+  });
+  $$('[data-q]', m).forEach(el => el.onclick = () => questionnaireModal(S.questionnaires.find(q => q.id === el.dataset.q)));
+  $$('[data-qs]', m).forEach(el => el.onclick = () => questionnaireModal(null, S.seances.find(s => s.id === el.dataset.qs)));
+  $$('[data-cy]', m).forEach(el => el.onclick = () => cycleModal(S.cycles.find(c => c.id === el.dataset.cy)));
+  $$('.day', m).forEach(d => {
+    d.onclick = e => { if (e.target.closest('.ses,.q,.evt,.cyc[data-cy]')) return; sessionModal(null, d.dataset.d); };
+    d.style.cursor = 'pointer';
+    d.ondragover = e => { e.preventDefault(); d.classList.add('drop'); };
+    d.ondragleave = () => d.classList.remove('drop');
+    d.ondrop = e => {
+      e.preventDefault(); d.classList.remove('drop');
+      const s = S.seances.find(x => x.id === e.dataTransfer.getData('text/plain'));
+      if (s && s.date !== d.dataset.d) { s.date = d.dataset.d; save(); render(); toast('Séance déplacée au ' + fdateL(s.date)); }
+    };
+  });
+}
+function sesCard(s) {
+  const n = (s.items || []).length;
+  return `<div class="ses ${s.lieu} ${s.statut}" draggable="true" data-s="${s.id}">
+    <div class="t"><span>${s.serieId ? '<span title="Séance récurrente" style="font-weight:400">🔁</span> ' : ''}${esc(s.titre || 'Séance')}</span><span>${s.statut === 'faite' ? '✓' : s.statut === 'manquee' ? '✕' : ''}</span></div>
+    <div class="s">${LIEUX[s.lieu] || ''} · ${n} exo${n > 1 ? 's' : ''}${s.duree ? ' · ' + s.duree + ' min' : ''}${s.rpe ? ' · RPE ' + s.rpe : ''}</div>${s.douleurPatient != null ? `<div class="s" style="margin-top:3px"><span class="pill lv${lvl(s.douleurPatient)}" style="font-size:11px;padding:1px 6px">Douleur ${s.douleurPatient}/10</span>${s.commentairePatient ? ' 💬' : ''}</div>` : ''}</div>`;
+}
+
+/* ---------- Modale séance ---------- */
+function sessionModal(s, date, draft) {
+  const isNew = !s;
+  const d = draft ? draft : s ? JSON.parse(JSON.stringify(s)) : { id: uid(), patientId: UI.pid, date, titre: '', lieu: 'cabinet', duree: 45, items: [], notes: '', statut: 'prevue', rpe: '', ressenti: '' };
+  const cy = cycleAt(d.patientId, d.date);
+  const q = s && qForSes(s.id);
+  const origDate = s ? s.date : d.date;
+  const serie = d.serieId ? S.seances.filter(x => x.serieId === d.serieId).sort((a, b) => a.date.localeCompare(b.date)) : [];
+  const following = () => S.seances.filter(x => d.serieId && x.serieId === d.serieId && x.id !== d.id && x.date > origDate && x.statut === 'prevue');
+  const rec = d._rec || (d._rec = { on: false, days: [(parse(d.date).getDay() + 6) % 7], weeks: 4 });
+  const exOpts = () => CATS.map(c => {
+    const l = S.exercices.filter(e => e.categorie === c);
+    return l.length ? `<optgroup label="${c}">${l.map(e => `<option value="${e.id}">${esc(e.nom)}</option>`).join('')}</optgroup>` : '';
+  }).join('');
+  const body = `
+    ${cy ? `<div class="chip" style="background:${cy.couleur}22;color:${cy.couleur};align-self:flex-start">● Cycle : ${esc(cy.nom)}${cy.objectif ? ' — ' + esc(cy.objectif) : ''}</div>` : ''}
+    <div class="fr">
+      <div class="f" style="grid-column:span 2"><label>Titre</label><input id="sT" value="${esc(d.titre)}" placeholder="ex. Renforcement quadriceps"></div>
+      <div class="f"><label>Date</label><input id="sD" type="date" value="${d.date}"></div>
+    </div>
+    <div class="fr">
+      <div class="f"><label>Lieu</label><select id="sL">${Object.entries(LIEUX).map(([k, v]) => `<option value="${k}" ${d.lieu === k ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+      <div class="f"><label>Durée (min)</label><input id="sM" type="number" min="0" value="${esc(d.duree)}"></div>
+      <div class="f"><label>Statut</label><select id="sSt"><option value="prevue">Prévue</option><option value="faite">Réalisée</option><option value="manquee">Non réalisée</option></select></div>
+      <div class="f"><label>RPE (1–10)</label><input id="sR" type="number" min="1" max="10" value="${esc(d.rpe)}"></div>
+    </div>
+    <div class="recb"><div class="rtop"><button type="button" class="btn sm ${rec.on ? 'on' : ''}" id="recT">🔁 Récurrence</button><span class="vhint">${serie.length > 1 ? `Fait partie d'une série de ${serie.length} séances (jusqu'au ${fdate(serie[serie.length - 1].date)}).` : 'Répéter cette séance sur plusieurs semaines'}</span></div>
+      <div id="recP" style="display:${rec.on ? 'flex' : 'none'};flex-direction:column;gap:10px">
+        <div class="f"><label>Jours de répétition</label><div class="days7" id="recD">${JOURS.map((j, i) => `<label><input type="checkbox" value="${i}" ${rec.days.includes(i) ? 'checked' : ''}>${j}</label>`).join('')}</div></div>
+        <div class="ctl"><span>Pendant</span><input type="number" id="recW" class="sel-p" min="1" max="52" value="${rec.weeks}" style="width:72px"><span>semaine(s)</span></div>
+        <div class="vhint" id="recS"></div>
+      </div></div>
+    <div class="f"><label>Exercices</label>
+      <div class="exr-h"><span></span><span>Exercice</span><span>Séries</span><span>Reps/durée</span><span>Charge</span><span>Repos</span><span></span></div>
+      <div class="exrows" id="rows"></div>
+      <div class="ctl" style="margin-top:6px"><select id="addEx" class="sel-p" style="flex:1;min-width:200px"><option value="">+ Ajouter un exercice de la bibliothèque…</option>${exOpts()}</select>
+      <button class="btn sm" id="newEx">Nouvel exercice</button></div>
+      <div class="dict"><button class="micb" id="mic" title="Dicter la séance">🎤</button><input id="vt" placeholder="Dicter ou écrire : « ajoute squat 4 séries de 8 à 20 kg, enlève le gainage »"><button class="btn sm p" id="vgo">OK</button></div>
+      <div id="vmsg" class="vhint"></div>
+    </div>
+    <div class="f"><label>Consignes / notes pour le patient</label><textarea id="sN" placeholder="Douleur tolérée ≤ 3/10 pendant l'effort…">${esc(d.notes)}</textarea></div>
+    ${d.douleurPatient != null || d.ressenti ? `<div class="f"><label>Retour du patient à la fin de la séance</label><div class="qbox">${d.douleurPatient != null ? `<span class="pill lv${lvl(d.douleurPatient)}">Douleur ${d.douleurPatient}/10</span>` : ''}<span style="font-size:13px">${d.commentairePatient ? '« ' + esc(d.commentairePatient) + ' »' : ''}${d.ressenti ? ' <span style="color:var(--mut)">(' + esc(d.ressenti) + ')</span>' : ''}</span></div></div>` : ''}
+    ${!isNew ? `<div class="f"><label>Questionnaire J+1</label>${q ? `<div class="qbox">
+      <span class="pill lv${lvl(q.douleur)}">Douleur ${q.douleur}/10</span><span class="pill lv${lvl(q.courbatures)}">Courbatures ${q.courbatures}/10</span>
+      ${q.fatigue != null ? `<span class="pill lv${lvl(q.fatigue)}">Fatigue ${q.fatigue}/10</span>` : ''}
+      <span class="k" style="color:var(--mut);font-size:12.5px">${q.commentaire ? '« ' + esc(q.commentaire) + ' »' : ''}</span>
+      <button class="btn sm" id="seeQ">Voir / modifier</button></div>` : `<div class="qbox"><span style="color:var(--mut)">Pas encore de réponse (attendue le ${fdateL(addDays(d.date, 1))}).</span><button class="btn sm" id="fillQ">Saisir pour le patient</button></div>`}</div>` : ''}`;
+  const foot = `${!isNew ? `<button class="btn d" id="del">Supprimer</button><button class="btn" id="dup">Dupliquer +7 j</button>` : ''}<div class="sp"></div><button class="btn" data-close>Annuler</button><button class="btn p" id="ok">Enregistrer</button>`;
+  modal({ title: isNew ? 'Nouvelle séance' : 'Séance du ' + fdateL(d.date), body, foot, wide: true, mount: m => {
+    $('#sSt', m).value = d.statut;
+    const rows = $('#rows', m);
+    let hl = new Set(), undo = null;
+    const draw = () => {
+      rows.innerHTML = d.items.map((it, i) => {
+        const e = EX(it.exId) || { nom: '(exercice supprimé)', consignes: '' };
+        return `<div class="exr${hl.has(it.exId) ? ' hl' : ''}" data-i="${i}">
+          <div style="display:flex;flex-direction:column"><button class="mv" data-up="${i}" title="Monter">▲</button><button class="mv" data-dn="${i}" title="Descendre">▼</button></div>
+          <div class="n" title="${esc(e.consignes)}">${esc(e.nom)}</div>
+          <input data-k="series" value="${esc(it.series)}"><input data-k="reps" value="${esc(it.reps)}"><input data-k="charge" value="${esc(it.charge)}" placeholder="—"><input data-k="repos" value="${esc(it.repos)}">
+          <button class="mv" data-rm="${i}" title="Retirer" style="font-size:17px">×</button>
+          <input class="note" data-k="note" value="${esc(it.note || '')}" placeholder="Note spécifique (optionnel)">
+        </div>`;
+      }).join('') || `<div style="color:var(--mut);font-size:13px;padding:6px 2px">Aucun exercice pour l'instant.</div>`;
+      $$('.exr input', rows).forEach(inp => inp.oninput = () => { d.items[+inp.closest('.exr').dataset.i][inp.dataset.k] = inp.value; });
+      $$('[data-rm]', rows).forEach(b => b.onclick = () => { d.items.splice(+b.dataset.rm, 1); draw(); });
+      $$('[data-up]', rows).forEach(b => b.onclick = () => { const i = +b.dataset.up; if (i > 0) { [d.items[i - 1], d.items[i]] = [d.items[i], d.items[i - 1]]; draw(); } });
+      $$('[data-dn]', rows).forEach(b => b.onclick = () => { const i = +b.dataset.dn; if (i < d.items.length - 1) { [d.items[i + 1], d.items[i]] = [d.items[i], d.items[i + 1]]; draw(); } });
+    };
+    draw();
+    $('#addEx', m).onchange = e => {
+      const ex = EX(e.target.value); if (!ex) return;
+      d.items.push({ exId: ex.id, series: ex.series, reps: ex.reps, charge: ex.charge, repos: ex.repos, note: '' });
+      if (!$('#sT', m).value && d.items.length === 1) $('#sT', m).value = ex.categorie;
+      e.target.value = ''; draw();
+    };
+    // Dictée / saisie rapide
+    const vt = $('#vt', m), vmsg = $('#vmsg', m), mic = $('#mic', m);
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let srec = null;
+    const runCmd = () => {
+      const text = vt.value.trim(); if (!text) return vt.focus();
+      const prev = d.items.map(x => ({ ...x }));
+      const r = localParse(text, d.items);
+      r.created.forEach(e => S.exercices.push(e));
+      const old = Object.fromEntries(prev.map(x => [x.exId, x]));
+      let a = 0, mo = 0; hl = new Set();
+      r.items.forEach(it => { const o = old[it.exId]; if (!o) { a++; hl.add(it.exId); } else if (['series', 'reps', 'charge', 'repos', 'note'].some(k => String(o[k] ?? '') !== String(it[k] ?? ''))) { mo++; hl.add(it.exId); } });
+      const del = prev.filter(o => !r.items.some(n => n.exId === o.exId)).length;
+      d.items = r.items; undo = prev; draw();
+      if (!$('#sT', m).value && d.items.length) { const c = (EX(d.items[0].exId) || {}).categorie; $('#sT', m).value = c || 'Séance'; }
+      vmsg.innerHTML = (a + mo + del ? `✓ ${[a && a + ' ajouté' + (a > 1 ? 's' : ''), mo && mo + ' modifié' + (mo > 1 ? 's' : ''), del && del + ' retiré' + (del > 1 ? 's' : '')].filter(Boolean).join(', ')}` : 'Aucun changement')
+        + (r.notes.length ? ` · <span style="color:var(--warn)">non compris : ${r.notes.map(esc).join(' · ')}</span>` : '') + ` · <a href="#" id="vundo" style="color:var(--pri)">annuler</a>`;
+      $('#vundo', m).onclick = e => { e.preventDefault(); if (undo) { d.items = undo; undo = null; hl = new Set(); draw(); vmsg.textContent = 'Modification annulée'; } };
+      vt.value = '';
+    };
+    $('#vgo', m).onclick = runCmd;
+    vt.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); runCmd(); } };
+    mic.onclick = () => {
+      if (srec) { srec.stop(); return; }
+      if (!SR) { vt.focus(); vmsg.innerHTML = '🎤 Utilisez le micro du clavier (téléphone) ou la dictée de l\'ordinateur (Fn Fn sur Mac, Win + H sur Windows), puis OK.'; return; }
+      try {
+        srec = new SR(); srec.lang = 'fr-FR'; srec.interimResults = true; srec.continuous = false;
+        srec.onresult = e => { let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript; vt.value = t; };
+        srec.onerror = () => { vmsg.innerHTML = '🎤 Micro non accessible ici : utilisez le micro du clavier (téléphone) ou Fn Fn / Win + H (ordinateur), puis OK.'; vt.focus(); };
+        srec.onend = () => { srec = null; mic.classList.remove('on'); if (vt.value.trim()) runCmd(); };
+        srec.start(); mic.classList.add('on'); vmsg.textContent = 'Je vous écoute…';
+      } catch (e) { srec = null; vt.focus(); }
+    };
+    $('#newEx', m).onclick = () => { collect(); exerciseModal(null, ex => { d.items.push({ exId: ex.id, series: ex.series, reps: ex.reps, charge: ex.charge, repos: ex.repos, note: '' }); reopen(); }, reopen); };
+    const collect = () => {
+      d.titre = $('#sT', m).value.trim(); d.date = $('#sD', m).value || d.date; d.lieu = $('#sL', m).value;
+      d.duree = $('#sM', m).value; d.statut = $('#sSt', m).value; d.rpe = $('#sR', m).value; d.notes = $('#sN', m).value;
+    };
+    const reopen = () => sessionModal(isNew ? null : s, d.date, d);
+    // Récurrence
+    const recDates = () => {
+      const days = $$('#recD input:checked', m).map(i => +i.value).sort(), w = Math.max(1, Math.min(52, +$('#recW', m).value || 1));
+      const start = $('#sD', m).value || d.date, mon = mondayOf(start), out = [];
+      for (let k = 0; k < w; k++) days.forEach(j => { const dt = addDays(mon, k * 7 + j); if (dt >= start) out.push(dt); });
+      return out;
+    };
+    const recPaint = () => {
+      rec.days = $$('#recD input:checked', m).map(i => +i.value); rec.weeks = +$('#recW', m).value || 1;
+      const ds = recDates();
+      $('#recS', m).innerHTML = ds.length ? `→ <b>${ds.length} séance${ds.length > 1 ? 's' : ''}</b> du ${fdate(ds[0])} au ${fdate(ds[ds.length - 1])}${!isNew && following().length ? ` · remplace les ${following().length} séances prévues suivantes de la série` : ''}` : 'Choisissez au moins un jour.';
+    };
+    $('#recT', m).onclick = () => { rec.on = !rec.on; $('#recT', m).classList.toggle('on', rec.on); $('#recP', m).style.display = rec.on ? 'flex' : 'none'; recPaint(); };
+    $$('#recD input', m).forEach(i => i.onchange = recPaint); $('#recW', m).oninput = recPaint; $('#sD', m).addEventListener('change', recPaint);
+    recPaint();
+    const clean = x => { const c = JSON.parse(JSON.stringify(x)); delete c._rec; return c; };
+    const commit = () => { const c = clean(d); const i = S.seances.findIndex(x => x.id === c.id); if (i >= 0) S.seances[i] = c; else S.seances.push(c); return c; };
+    const finish = msg => { save(); closeModal(); render(); toast(msg); };
+    $('#ok', m).onclick = () => {
+      collect();
+      if (!d.titre) d.titre = 'Séance';
+      if (rec.on) {
+        const ds = recDates(); if (!ds.length) return toast('Choisissez au moins un jour de répétition');
+        const sid = d.serieId || uid();
+        if (d.serieId) { const fid = new Set(following().map(x => x.id)); S.seances = S.seances.filter(x => !fid.has(x.id)); }
+        d.serieId = sid;
+        if (!ds.includes(d.date) && (isNew || d.statut === 'prevue')) d.date = ds[0];
+        const base = commit(); let n = 1;
+        ds.filter(dt => dt > base.date).forEach(dt => {
+          const c = clean(base); c.id = uid(); c.date = dt; c.statut = 'prevue'; c.rpe = ''; c.ressenti = ''; delete c.douleurPatient; delete c.commentairePatient; delete c.valideLe;
+          S.seances.push(c); n++;
+        });
+        return finish(`${n} séances planifiées en récurrence`);
+      }
+      const fol = !isNew ? following() : [];
+      if (!fol.length) { commit(); return finish('Séance enregistrée'); }
+      choiceBox('Modifier une séance récurrente', [
+        { label: 'Uniquement cette séance', sub: fdateL(d.date), fn: () => { commit(); finish('Séance modifiée'); } },
+        { label: `Cette séance et les ${fol.length} suivantes`, sub: `Exercices, titre, lieu, durée et consignes appliqués jusqu'au ${fdate(fol[fol.length - 1].date)}`, fn: () => {
+          const delta = diffDays(origDate, d.date); commit();
+          fol.forEach(f => { f.titre = d.titre; f.lieu = d.lieu; f.duree = d.duree; f.notes = d.notes; f.items = JSON.parse(JSON.stringify(d.items)); if (delta) f.date = addDays(f.date, delta); });
+          finish(`${fol.length + 1} séances modifiées`);
+        } },
+      ], reopen);
+    };
+    if (!isNew) {
+      const delOne = ids => { S.seances = S.seances.filter(x => !ids.has(x.id)); S.questionnaires = S.questionnaires.filter(x => !ids.has(x.seanceId)); };
+      $('#del', m).onclick = () => {
+        const fol = following();
+        if (!fol.length) return confirmBox('Supprimer cette séance ?', () => { delOne(new Set([d.id])); save(); render(); });
+        choiceBox('Supprimer une séance récurrente', [
+          { label: 'Uniquement cette séance', sub: fdateL(origDate), fn: () => { delOne(new Set([d.id])); finish('Séance supprimée'); } },
+          { label: `Cette séance et les ${fol.length} suivantes`, sub: `Jusqu'au ${fdate(fol[fol.length - 1].date)} (les séances déjà réalisées sont conservées)`, danger: true, fn: () => { delOne(new Set([d.id, ...fol.map(x => x.id)])); finish(`${fol.length + 1} séances supprimées`); } },
+        ], reopen);
+      };
+      $('#dup', m).onclick = () => { collect(); const c = { ...JSON.parse(JSON.stringify(d)), id: uid(), date: addDays(d.date, 7), statut: 'prevue', rpe: '', ressenti: '' }; delete c._rec; delete c.serieId; delete c.douleurPatient; delete c.commentairePatient; S.seances.push(c); save(); closeModal(); render(); toast('Séance dupliquée au ' + fdateL(c.date)); };
+      const sq = $('#seeQ', m); if (sq) sq.onclick = () => questionnaireModal(q);
+      const fq = $('#fillQ', m); if (fq) fq.onclick = () => questionnaireModal(null, s);
+    }
+  } });
+}
+
+/* ---------- Modale rendez-vous / test ---------- */
+function rdvModal(r, date) {
+  const isNew = !r;
+  const d = r ? { ...r } : { id: uid(), patientId: UI.pid, type: 'test', titre: '', date: date || today(), heure: '', lieu: '', notes: '', resultat: '' };
+  modal({ title: isNew ? 'Nouveau rendez-vous / test' : 'Rendez-vous / test', body: `
+    <div class="f"><label>Type</label><div class="chips" id="rt">${Object.entries(RDV_T).map(([k, T]) => `<button data-t="${k}" class="${d.type === k ? 'on' : ''}">${T.i} ${T.l}</button>`).join('')}</div></div>
+    <div class="f"><label>Intitulé</label><input id="rT" value="${esc(d.titre)}" placeholder="${esc((RDV_T[d.type] || RDV_T.autre).ph)}"></div>
+    <div class="fr"><div class="f"><label>Date</label><input type="date" id="rD" value="${d.date}"></div><div class="f"><label>Heure</label><input type="time" id="rH" value="${esc(d.heure)}"></div>
+    <div class="f" style="grid-column:span 2"><label>Lieu / praticien</label><input id="rL" value="${esc(d.lieu)}" placeholder="ex. Dr X, clinique…"></div></div>
+    <div class="f"><label>Notes</label><textarea id="rN" placeholder="Préparation, questions à poser, consignes…">${esc(d.notes)}</textarea></div>
+    <div class="f"><label>Résultat / compte-rendu (après le rendez-vous)</label><textarea id="rR">${esc(d.resultat)}</textarea></div>
+    <div id="rj" style="font-size:13px;color:var(--mut)"></div>`,
+    foot: `${!isNew ? '<button class="btn d" id="del">Supprimer</button>' : ''}<div class="sp"></div><button class="btn" data-close>Annuler</button><button class="btn p" id="ok">Enregistrer</button>`,
+    mount: m => {
+      const upd = () => { const v = $('#rD', m).value; if (v) { const [j, s] = jx(v); $('#rj', m).innerHTML = `Compte à rebours : <b>${j}</b> (${s})`; } };
+      upd(); $('#rD', m).oninput = upd;
+      $$('#rt button', m).forEach(b => b.onclick = () => { d.type = b.dataset.t; $$('#rt button', m).forEach(x => x.classList.toggle('on', x === b)); $('#rT', m).placeholder = RDV_T[d.type].ph; });
+      $('#ok', m).onclick = () => {
+        Object.assign(d, { titre: $('#rT', m).value.trim(), date: $('#rD', m).value || d.date, heure: $('#rH', m).value, lieu: $('#rL', m).value.trim(), notes: $('#rN', m).value, resultat: $('#rR', m).value });
+        S.rdv = S.rdv || []; const i = S.rdv.findIndex(x => x.id === d.id); if (i >= 0) S.rdv[i] = d; else S.rdv.push(d);
+        save(); closeModal(); render(); toast('Rendez-vous enregistré');
+      };
+      if (!isNew) $('#del', m).onclick = () => confirmBox('Supprimer ce rendez-vous ?', () => { S.rdv = S.rdv.filter(x => x.id !== d.id); save(); render(); });
+    } });
+}
+
+/* ---------- Commande vocale ---------- */
+const NUMW = { deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6, sept: 7, huit: 8, neuf: 9, dix: 10, onze: 11, douze: 12, treize: 13, quatorze: 14, quinze: 15, seize: 16, 'dix-huit': 18, vingt: 20, 'vingt-cinq': 25, trente: 30, quarante: 40, cinquante: 50, soixante: 60, cent: 100 };
+const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const doseTxt = it => `${it.series || '?'} × ${it.reps || '?'}${it.charge ? ' · ' + it.charge : ''}${it.repos ? ' · repos ' + it.repos : ''}`;
+
+const STOP = ['les', 'des', 'sur', 'avec', 'corps', 'une', 'pour', 'dans', 'puis', 'chaque'];
+const VERB = /^(?:et\s+)?(?:ajoute[rz]?|rajoute[rz]?|mets?|mettre|passe[rz]?|change[rz]?|fais|faire|modifie[rz]?|garde[rz]?|programme[rz]?|le|la|les|l'|du|de la|un|une|des|au|a la)\s+/;
+const words = s => norm(s).replace(/\(.*?\)/g, '').split(/[^a-z0-9]+/).filter(w => w.length >= 3 && !STOP.includes(w));
+const wordHit = (w, seg) => seg.includes(w) || (w.length > 4 && seg.includes(w.slice(0, -1)));
+const capit = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+function localParse(text, items) {
+  let src = norm(text).replace(/\b(dix-huit|vingt-cinq|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt|trente|quarante|cinquante|soixante|cent)\b/g, w => NUMW[w]);
+  const out = items.map(x => ({ ...x })), notes = [], created = [];
+  const lib = () => S.exercices.concat(created);
+  const nt = norm(text.normalize('NFC'));
+  const orig = n => { const i = nt.indexOf(n); return i >= 0 ? text.normalize('NFC').substr(i, n.length) : n; };
+  const segs = src.split(/\s*(?:(?<!\d),(?!\d)|;|\n|\.\s|\bpuis\b|\bensuite\b|\bet (?=(?:ajoute|rajoute|enleve|retire|supprime|passe|mets?|change|remplace|fais)))\s*/).filter(s => s.trim().length > 2);
+  // Nom d'exercice dicté = texte avant le premier chiffre / mot-clé de dosage
+  const spoken = seg => { let t = seg; for (let i = 0; i < 4; i++) t = t.replace(VERB, ''); return t.split(/\s(?:\d|en\s+(?:premier|dernier)|au debut|a la fin|repos|avec|sans|a\s+\d|par\s)/)[0].replace(/\d.*$/, '').trim(); };
+  const find = (seg, name) => {
+    const nw = words(name);
+    return lib().map(e => {
+      const ew = words(e.nom); const hit = ew.filter(w => wordHit(w, seg)).length;
+      const cov = nw.length ? nw.filter(w => ew.some(x => x.startsWith(w.slice(0, 4)) || w.startsWith(x.slice(0, 4)))).length / nw.length : 0;
+      return { e, s: hit + (out.some(o => o.exId === e.id) ? 0.5 : 0), cov };
+    }).filter(c => c.s >= 1).sort((a, b) => b.s - a.s || b.cov - a.cov)[0];
+  };
+  const dose = seg => {
+    let s2 = seg; const ch = {};
+    const rp = s2.match(/repos\s*(?:de\s*)?(\d+)\s*(s\b|sec\w*|min\w*)?/); if (rp) { ch.repos = rp[1] + ' ' + (rp[2] && rp[2].startsWith('min') ? 'min' : 's'); s2 = s2.replace(rp[0], ' '); }
+    const kg = s2.match(/(\d+(?:[.,]\d+)?)\s*(?:kg|kilos?|kilogrammes?)/); if (kg) { ch.charge = kg[1].replace('.', ',') + ' kg'; s2 = s2.replace(kg[0], ' '); }
+    else if (/sans charge|poids du corps|poids de corps/.test(s2)) ch.charge = '';
+    const el = s2.match(/elastique\s+(rouge|vert|verte|bleu|bleue|noir|noire|jaune|violet|gris|orange|leger|moyen|fort)/); if (el && !kg) ch.charge = 'élastique ' + el[1];
+    const se = s2.match(/(\d+)\s*(?:series?|x\b|fois|tours?)/); if (se) { ch.series = +se[1]; s2 = s2.replace(se[0], ' '); }
+    const re = s2.match(/(\d+)\s*(?:rep\w*|mouvements?)/) || s2.match(/(?:de|a)\s+(\d+)(?!\s*(?:s\b|sec|min|\d))/);
+    const du = s2.match(/(\d+)\s*(s\b|sec\w*|min\w*)/);
+    const side = /par (?:cote|jambe|bras)|chaque (?:cote|jambe)/.test(s2) ? '/côté' : '';
+    if (re) ch.reps = re[1] + side; else if (du) ch.reps = du[1] + (du[2].startsWith('min') ? ' min' : ' s') + side;
+    const tp = s2.match(/tempo\s+([\d\s-]+)/); if (tp) ch.note = 'Tempo ' + tp[1].trim();
+    return ch;
+  };
+  const move = (i, seg) => {
+    if (i < 0) return;
+    if (/en premier|au debut|commence par/.test(seg)) out.unshift(out.splice(i, 1)[0]);
+    else if (/en dernier|a la fin|termine par|finir par/.test(seg)) out.push(out.splice(i, 1)[0]);
+  };
+  segs.forEach(seg => {
+    const isDel = /\b(enleve|enlever|retire|retirer|supprime|supprimer|vire|virer)\b/.test(seg);
+    const isAdd = /\b(ajoute|ajouter|rajoute|rajouter)\b/.test(seg);
+    // Remplacer A par B
+    const rm = seg.match(/remplace[rz]?\s+(.+?)\s+par\s+(.+)/);
+    if (rm) {
+      const a = find(rm[1], rm[1]); const i = a ? out.findIndex(o => o.exId === a.e.id) : -1;
+      if (i < 0) { notes.push(seg); return; }
+      const bn = spoken(rm[2]); let b = find(rm[2], bn);
+      if (!b || b.cov < 1) { const ne = { id: uid(), nom: capit(orig(bn)), categorie: guessCat(bn), consignes: '', series: out[i].series, reps: out[i].reps, charge: '', repos: out[i].repos }; created.push(ne); b = { e: ne }; }
+      out[i] = { ...out[i], exId: b.e.id, ...dose(rm[2]) };
+      return;
+    }
+    const name = spoken(seg);
+    let cand = find(seg, name);
+    if (isDel) { const i = cand ? out.findIndex(o => o.exId === cand.e.id) : -1; if (i >= 0) out.splice(i, 1); else notes.push(seg); return; }
+    // Exercice absent de la bibliothèque : on le crée quand il est clairement nommé
+    if ((!cand || (isAdd && cand.cov < 1)) && words(name).length) {
+      const ch0 = dose(seg);
+      const ne = { id: uid(), nom: capit(orig(name)), categorie: guessCat(name), consignes: '', series: ch0.series || 3, reps: ch0.reps || '10', charge: ch0.charge || '', repos: ch0.repos || '60 s' };
+      created.push(ne); cand = { e: ne };
+    }
+    if (!cand) { notes.push(seg); return; }
+    const ch = dose(seg);
+    let i = out.findIndex(o => o.exId === cand.e.id);
+    if (i >= 0) Object.assign(out[i], ch);
+    else { out.push({ exId: cand.e.id, series: cand.e.series, reps: cand.e.reps, charge: cand.e.charge, repos: cand.e.repos, note: '', ...ch }); i = out.length - 1; }
+    move(i, seg);
+  });
+  return { items: out, notes, created: created.filter(c => out.some(o => o.exId === c.id)) };
+}
+
+/* ---------- Modale questionnaire ---------- */
+function questionnaireModal(q, ses) {
+  const isNew = !q;
+  ses = ses || (q && S.seances.find(s => s.id === q.seanceId));
+  const d = q ? { ...q } : { id: uid(), seanceId: ses?.id, patientId: ses?.patientId || UI.pid, date: ses ? addDays(ses.date, 1) : today(), douleur: 0, courbatures: 0, fatigue: 0, sommeil: 'bon', gonflement: 'non', commentaire: '' };
+  const slider = (k, label, lo, hi) => `<div class="sl"><div class="h"><span>${label}</span><b id="v_${k}">${d[k]}</b></div><input type="range" min="0" max="10" value="${d[k]}" data-k="${k}"><div class="ends"><span>${lo}</span><span>${hi}</span></div></div>`;
+  modal({ title: 'Questionnaire J+1' + (ses ? ' · ' + esc(ses.titre) + ' du ' + fdate(ses.date) : ''), body: `
+    ${slider('douleur', 'Douleur (EVA)', '0 = aucune', '10 = maximale')}
+    ${slider('courbatures', 'Courbatures', '0 = aucune', '10 = très intenses')}
+    ${slider('fatigue', 'Fatigue générale', '0 = en forme', '10 = épuisé')}
+    <div class="fr"><div class="f"><label>Sommeil</label><select id="qS"><option value="bon">Bon</option><option value="moyen">Moyen</option><option value="mauvais">Mauvais</option></select></div>
+    <div class="f"><label>Gonflement / épanchement</label><select id="qG"><option value="non">Non</option><option value="oui">Oui</option></select></div>
+    <div class="f"><label>Date de réponse</label><input type="date" id="qD" value="${d.date}"></div></div>
+    <div class="f"><label>Commentaire</label><textarea id="qC">${esc(d.commentaire)}</textarea></div>`,
+    foot: `${!isNew ? '<button class="btn d" id="del">Supprimer</button>' : ''}<div class="sp"></div><button class="btn" data-close>Annuler</button><button class="btn p" id="ok">Enregistrer</button>`,
+    mount: m => {
+      $('#qS', m).value = d.sommeil; $('#qG', m).value = d.gonflement;
+      $$('input[type=range]', m).forEach(r => r.oninput = () => { d[r.dataset.k] = +r.value; $('#v_' + r.dataset.k, m).textContent = r.value; });
+      $('#ok', m).onclick = () => {
+        d.sommeil = $('#qS', m).value; d.gonflement = $('#qG', m).value; d.commentaire = $('#qC', m).value.trim(); d.date = $('#qD', m).value || d.date;
+        const i = S.questionnaires.findIndex(x => x.id === d.id); if (i >= 0) S.questionnaires[i] = d; else S.questionnaires.push(d);
+        save(); closeModal(); render(); toast('Questionnaire enregistré');
+      };
+      if (!isNew) $('#del', m).onclick = () => confirmBox('Supprimer cette réponse ?', () => { S.questionnaires = S.questionnaires.filter(x => x.id !== d.id); save(); render(); });
+    } });
+}
+
+/* ---------- Patients ---------- */
+function patientModal(p) {
+  const isNew = !p;
+  const d = p ? { ...p } : { id: uid(), prenom: '', nom: '', pathologie: '', objectif: '', debut: today(), tel: '', notes: '', couleur: AVC[S.patients.length % AVC.length] };
+  modal({ title: isNew ? 'Nouveau patient' : 'Fiche patient', body: `
+    <div class="fr"><div class="f"><label>Prénom</label><input id="pP" value="${esc(d.prenom)}"></div><div class="f"><label>Nom</label><input id="pN" value="${esc(d.nom)}"></div></div>
+    <div class="f"><label>Motif / pathologie</label><input id="pM" value="${esc(d.pathologie)}" placeholder="ex. Tendinopathie rotulienne droite"></div>
+    <div class="f"><label>Objectif global</label><input id="pO" value="${esc(d.objectif)}" placeholder="ex. Reprise de la course sans douleur"></div>
+    <div class="fr"><div class="f"><label>Début de prise en charge</label><input id="pD" type="date" value="${d.debut}"></div><div class="f"><label>Téléphone</label><input id="pT" value="${esc(d.tel)}"></div></div>
+    <div class="f"><label>E-mail du patient (facultatif)</label><input id="pE" type="email" value="${esc(d.email || '')}"></div>
+    <div class="f"><label>Notes (jamais envoyées au patient)</label><textarea id="pX">${esc(d.notes)}</textarea></div>
+    ${!isNew ? '<div class="f"><label>Lien patient</label><div class="qbox" id="plink"></div></div>' : ''}`,
+    foot: `${!isNew ? '<button class="btn d" id="del">Supprimer le patient</button>' : ''}<div class="sp"></div><button class="btn" data-close>Annuler</button><button class="btn p" id="ok">Enregistrer</button>`,
+    mount: m => {
+      $('#pP', m).focus();
+      if (!isNew) linkPanel(m, d);
+      $('#ok', m).onclick = () => {
+        d.email = $('#pE', m).value.trim();
+        Object.assign(d, { prenom: $('#pP', m).value.trim(), nom: $('#pN', m).value.trim(), pathologie: $('#pM', m).value.trim(), objectif: $('#pO', m).value.trim(), debut: $('#pD', m).value, tel: $('#pT', m).value.trim(), notes: $('#pX', m).value });
+        if (!d.prenom && !d.nom) { $('#pP', m).style.borderColor = 'var(--bad)'; return; }
+        const i = S.patients.findIndex(x => x.id === d.id); if (i >= 0) S.patients[i] = d; else S.patients.push(d);
+        UI.pid = d.id; save(); closeModal(); if (UI.view === 'exercices') location.hash = 'calendrier'; render();
+      };
+      if (!isNew) $('#del', m).onclick = () => confirmBox(`Supprimer ${fullName(d)} et toutes ses séances, cycles et questionnaires ?`, () => {
+        S.patients = S.patients.filter(x => x.id !== d.id); S.seances = S.seances.filter(x => x.patientId !== d.id);
+        S.cycles = S.cycles.filter(x => x.patientId !== d.id); S.questionnaires = S.questionnaires.filter(x => x.patientId !== d.id); S.rdv = (S.rdv || []).filter(x => x.patientId !== d.id);
+        UI.pid = null; save(); render();
+      });
+    } });
+}
+
+/* ---------- Cycles ---------- */
+const CYCLE_TPL = {
+  'Rééducation progressive (4 phases, 10 sem.)': [
+    ['Phase 1 – Protection & mobilité', 'Diminuer la douleur, récupérer les amplitudes', 'Douleur au repos ≤ 2/10, amplitudes complètes', 14],
+    ['Phase 2 – Renforcement', 'Restaurer la force (isométrie → concentrique/excentrique)', 'Squat unipodal contrôlé, douleur J+1 ≤ 3/10', 21],
+    ['Phase 3 – Force & pliométrie', 'Développer force max et réactivité', 'Ratio force ≥ 85 % côté sain, sauts sans douleur', 21],
+    ['Phase 4 – Retour au sport', 'Reprise progressive de l\'activité spécifique', '30 min de course continue sans douleur à J+1', 14]],
+  'Tendinopathie (3 phases, 12 sem.)': [
+    ['Isométrie & gestion de charge', 'Effet antalgique, maintenir l\'activité tolérée', 'Douleur à l\'effort ≤ 3/10', 21],
+    ['Renforcement lourd et lent', 'Augmenter la capacité du tendon', 'Douleur J+1 stable, charge progressive', 35],
+    ['Stockage d\'énergie & reprise', 'Pliométrie progressive puis course', 'Sauts unipodaux sans douleur, reprise sport', 28]],
+  'Post-entorse cheville (3 phases, 6 sem.)': [
+    ['Contrôle de l\'œdème & appui', 'Marche normale, réduction du gonflement', 'Appui complet indolore', 10],
+    ['Proprioception & renforcement', 'Stabilité unipodale, force des fibulaires', 'Y-balance symétrique à 90 %', 18],
+    ['Retour au sport', 'Course, changements de direction, sauts', 'Tests fonctionnels validés', 14]],
+};
+function applyTemplate(name) {
+  const p = P(UI.pid), last = cycOf(p.id).slice(-1)[0];
+  modal({ title: 'Appliquer : ' + esc(name), body: `<div class="f"><label>Date de début du premier cycle</label><input type="date" id="tD" value="${last ? addDays(last.fin, 1) : mondayOf(today())}"></div>
+    <div style="font-size:13px;color:var(--mut)">${CYCLE_TPL[name].map(c => `• ${esc(c[0])} — ${Math.round(c[3] / 7)} sem.`).join('<br>')}</div>`,
+    foot: `<button class="btn" data-close>Annuler</button><button class="btn p" id="ok">Créer les cycles</button>`,
+    mount: m => $('#ok', m).onclick = () => {
+      let d = $('#tD', m).value;
+      CYCLE_TPL[name].forEach(([nom, objectif, criteres, len], i) => {
+        S.cycles.push({ id: uid(), patientId: p.id, nom, objectif, criteres, debut: d, fin: addDays(d, len - 1), couleur: COLORS[(cycOf(p.id).length) % COLORS.length] });
+        d = addDays(d, len);
+      });
+      save(); closeModal(); render(); toast('Cycles créés');
+    } });
+}
+function cycleModal(c) {
+  const isNew = !c;
+  const last = cycOf(UI.pid).slice(-1)[0];
+  const st = last ? addDays(last.fin, 1) : mondayOf(today());
+  const d = c ? { ...c } : { id: uid(), patientId: UI.pid, nom: '', objectif: '', criteres: '', debut: st, fin: addDays(st, 20), couleur: COLORS[cycOf(UI.pid).length % COLORS.length] };
+  modal({ title: isNew ? 'Nouveau cycle' : 'Modifier le cycle', body: `
+    <div class="f"><label>Nom du cycle</label><input id="cN" value="${esc(d.nom)}" placeholder="ex. Phase 2 – Renforcement"></div>
+    <div class="f"><label>Objectif</label><textarea id="cO" placeholder="ex. Restaurer la force du quadriceps">${esc(d.objectif)}</textarea></div>
+    <div class="f"><label>Critères de passage au cycle suivant</label><input id="cK" value="${esc(d.criteres)}" placeholder="ex. Douleur J+1 ≤ 3/10, squat unipodal contrôlé"></div>
+    <div class="fr"><div class="f"><label>Début</label><input type="date" id="cD" value="${d.debut}"></div><div class="f"><label>Fin</label><input type="date" id="cF" value="${d.fin}"></div>
+    <div class="f"><label>Couleur</label><div class="chips" id="cc">${COLORS.map(x => `<button data-c="${x}" style="width:26px;height:26px;padding:0;background:${x};border:3px solid ${x === d.couleur ? '#15233b' : '#fff'};box-shadow:0 0 0 1px var(--line)"></button>`).join('')}</div></div></div>`,
+    foot: `${!isNew ? '<button class="btn d" id="del">Supprimer</button><button class="btn" id="plan">Planifier les séances du cycle</button>' : ''}<div class="sp"></div><button class="btn" data-close>Annuler</button><button class="btn p" id="ok">Enregistrer</button>`,
+    mount: m => {
+      if (!isNew) $('#plan', m).onclick = () => planModal(d);
+      $$('#cc button', m).forEach(b => b.onclick = () => { d.couleur = b.dataset.c; $$('#cc button', m).forEach(x => x.style.borderColor = x.dataset.c === d.couleur ? '#15233b' : '#fff'); });
+      $('#ok', m).onclick = () => {
+        Object.assign(d, { nom: $('#cN', m).value.trim() || 'Cycle', objectif: $('#cO', m).value.trim(), criteres: $('#cK', m).value.trim(), debut: $('#cD', m).value, fin: $('#cF', m).value });
+        if (d.fin < d.debut) { $('#cF', m).style.borderColor = 'var(--bad)'; return; }
+        const i = S.cycles.findIndex(x => x.id === d.id); if (i >= 0) S.cycles[i] = d; else S.cycles.push(d);
+        save(); closeModal(); render(); toast('Cycle enregistré');
+      };
+      if (!isNew) $('#del', m).onclick = () => confirmBox('Supprimer ce cycle ? (les séances sont conservées)', () => { S.cycles = S.cycles.filter(x => x.id !== d.id); save(); render(); });
+    } });
+}
+function planModal(c) {
+  const sel = [];
+  modal({ title: 'Planifier les séances · ' + esc(c.nom), wide: true, body: `
+    <div style="font-size:13px;color:var(--mut)">Crée une séance type sur les jours choisis, du ${fdate(c.debut)} au ${fdate(c.fin)}. Vous pourrez ensuite ajuster chaque séance dans le calendrier.</div>
+    <div class="fr"><div class="f" style="grid-column:span 2"><label>Titre</label><input id="gT" value="${esc(c.nom.replace(/^Phase \d+ – /, ''))}"></div>
+    <div class="f"><label>Lieu</label><select id="gL">${Object.entries(LIEUX).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
+    <div class="f"><label>Durée (min)</label><input id="gM" type="number" value="45"></div></div>
+    <div class="f"><label>Jours</label><div class="days7">${JOURS.map((j, i) => `<label><input type="checkbox" value="${i}" ${i === 0 || i === 3 ? 'checked' : ''}>${j}</label>`).join('')}</div></div>
+    <div class="f"><label>Exercices (cliquez pour sélectionner, dans l'ordre)</label><div class="chips" id="gx">${S.exercices.map(e => `<button data-x="${e.id}">${esc(e.nom)}</button>`).join('')}</div></div>
+    <div class="f"><label>Progression</label><select id="gP"><option value="0">Aucune (dosage identique)</option><option value="1">+1 série toutes les 2 semaines (max 5)</option></select></div>
+    <label style="font-size:13px;display:flex;gap:8px;align-items:center"><input type="checkbox" id="gR"> Remplacer les séances « prévues » déjà présentes dans ce cycle</label>`,
+    foot: `<div class="sp"></div><button class="btn" data-close>Annuler</button><button class="btn p" id="ok">Créer les séances</button>`,
+    mount: m => {
+      $$('#gx button', m).forEach(b => b.onclick = () => { const id = b.dataset.x, i = sel.indexOf(id); if (i >= 0) sel.splice(i, 1); else sel.push(id); b.classList.toggle('on', i < 0); });
+      $('#ok', m).onclick = () => {
+        const days = $$('.days7 input:checked', m).map(i => +i.value);
+        if (!days.length) return toast('Choisissez au moins un jour');
+        if ($('#gR', m).checked) S.seances = S.seances.filter(s => !(s.patientId === c.patientId && s.date >= c.debut && s.date <= c.fin && s.statut === 'prevue'));
+        const prog = $('#gP', m).value === '1';
+        let n = 0; const sid = uid();
+        for (let dd = c.debut; dd <= c.fin; dd = addDays(dd, 1)) {
+          if (!days.includes((parse(dd).getDay() + 6) % 7)) continue;
+          const wk = Math.floor(diffDays(c.debut, dd) / 14);
+          S.seances.push({ id: uid(), serieId: sid, patientId: c.patientId, date: dd, titre: $('#gT', m).value || 'Séance', lieu: $('#gL', m).value, duree: $('#gM', m).value, statut: 'prevue', rpe: '', ressenti: '', notes: '',
+            items: sel.map(id => { const e = EX(id); return { exId: id, series: prog ? Math.min(5, (+e.series || 1) + wk) : e.series, reps: e.reps, charge: e.charge, repos: e.repos, note: '' }; }) });
+          n++;
+        }
+        save(); closeModal(); render(); toast(n + ' séances créées');
+      };
+    } });
+}
+
+/* ---------- Exercices ---------- */
+function renderExercices(m) {
+  const q = norm(UI.exq);
+  if (UI.excat && !CATS.includes(UI.excat)) UI.excat = '';
+  const list = S.exercices.filter(e => (!UI.excat || e.categorie === UI.excat) && norm(e.nom + ' ' + e.consignes + ' ' + (e.sous || '')).includes(q))
+    .map((e, i) => [e, i]).sort((a, b) => (isVelo(b[0]) - isVelo(a[0])) || a[1] - b[1]).map(x => x[0]);
+  const cnt = c => S.exercices.filter(e => e.categorie === c).length;
+  const showRun = UI.excat === 'Course à pied';
+  const card = e => `<div class="exc" data-x="${e.id}"><div><span class="tag">${esc(e.categorie)}</span>${e.sous ? ` <span class="tag" style="background:#f6f8fb;color:var(--mut)">${esc(e.sous)}</span>` : ''}</div><h4>${esc(e.nom)}</h4>
+      <div class="dose">${esc(e.series)} × ${esc(e.reps)}${e.charge ? ' · ' + esc(e.charge) : ''}${e.repos ? ' · repos ' + esc(e.repos) : ''}</div><div class="c">${esc(e.consignes)}</div></div>`;
+  m.innerHTML = `<div class="ph"><h1>Bibliothèque d'exercices</h1><span class="meta">${S.exercices.length} exercices</span><div class="sp"></div>
+    <input class="search" id="xq" style="width:220px" placeholder="Rechercher…" value="${esc(UI.exq)}"><button class="btn p" id="xa">+ Exercice</button></div>
+    <div class="seg" id="xc" style="margin-bottom:14px;flex-wrap:wrap"><button data-c="" class="${!UI.excat ? 'on' : ''}">Tous</button>${[['Renforcement', '🏋️ Exercices renfo'], ['Mobilité', '🧘 Exercices mobilité'], ['Course à pied', '🏃 Séances course à pied']].map(([c, l]) => `<button data-c="${c}" class="${UI.excat === c ? 'on' : ''}">${l} <span style="opacity:.7">${cnt(c)}</span></button>`).join('')}</div>
+    ${showRun ? `<div class="panel" style="margin-bottom:14px"><h2>📋 Progression de reprise — La Clinique Du Coureur</h2>
+      <div class="grid g2">${Object.entries(RUN_PROG).map(([k, P]) => `<div style="border:1px solid var(--line);border-radius:10px;padding:12px">
+        <div style="font-weight:600">${esc(P.nom)}</div><div class="vhint" style="margin:3px 0 8px">${esc(P.desc)}</div>
+        <div class="ctl"><button class="btn sm" data-see="${k}">Voir les ${P.seq.length} séances</button><button class="btn sm p" data-plan="${k}">Planifier pour un patient</button></div>
+        <div id="see_${k}" style="display:none;margin-top:10px;font-size:12.5px;columns:2;column-gap:18px">${P.seq.map((x, i) => `<div style="padding:2px 0;break-inside:avoid"><b>S${i + 1}</b> · ${runTxt(x)}</div>`).join('')}</div></div>`).join('')}</div>
+      <div class="vhint" style="margin-top:10px"><b>Règles :</b> ${RUN_RULES.map(esc).join(' · ')}</div></div>` : ''}
+    <div class="exg">${list.map(card).join('') || '<div class="empty">Aucun exercice</div>'}</div>`;
+  const xq = $('#xq'); xq.oninput = () => { UI.exq = xq.value; renderExercices(m); const n = $('#xq'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); };
+  $$('#xc button', m).forEach(b => b.onclick = () => { UI.excat = b.dataset.c; render(); });
+  $('#xa').onclick = () => exerciseModal(null, null, null, UI.excat);
+  $$('.exc', m).forEach(el => el.onclick = () => exerciseModal(EX(el.dataset.x)));
+  $$('[data-see]', m).forEach(b => b.onclick = () => { const el = $('#see_' + b.dataset.see); el.style.display = el.style.display === 'none' ? 'block' : 'none'; });
+  $$('[data-plan]', m).forEach(b => b.onclick = () => runPlanModal(b.dataset.plan));
+}
+function runPlanModal(key) {
+  const P = RUN_PROG[key];
+  if (!S.patients.length) return toast('Ajoutez d\'abord un patient');
+  modal({ title: '🏃 ' + esc(P.nom), wide: true, body: `
+    <div class="fr"><div class="f"><label>Patient</label><select id="rpP" class="sel-p">${S.patients.map(p => `<option value="${p.id}" ${p.id === UI.pid ? 'selected' : ''}>${esc(fullName(p))}</option>`).join('')}</select></div>
+    <div class="f"><label>Début</label><input type="date" id="rpD" value="${today()}"></div><div class="f"><label>Commencer à la séance</label><select id="rpS" class="sel-p">${P.seq.map((x, i) => `<option value="${i}">S${i + 1} · ${runTxt(x)}</option>`).join('')}</select></div></div>
+    <div class="f"><label>Jours de course (4 à 6 par semaine recommandés)</label><div class="days7" id="rpJ">${JOURS.map((j, i) => `<label><input type="checkbox" value="${i}" ${[0, 1, 3, 4, 5].includes(i) ? 'checked' : ''}>${j}</label>`).join('')}</div></div>
+    <label style="font-size:13px;display:flex;gap:8px;align-items:center"><input type="checkbox" id="rpC" checked> Ajouter un cycle « Reprise course à pied » dans le calendrier</label>
+    <div id="rpI" class="vhint"></div>
+    <div class="vhint">Les séances sont créées en <b>auto-exercice</b> (bleu) : le patient les voit sur son téléphone avec un minuteur course / marche. Elles forment une série 🔁 que vous pouvez adapter (uniquement une séance ou toutes les suivantes) selon la douleur et le questionnaire du lendemain.</div>`,
+    foot: `<div class="sp"></div><button class="btn" data-close>Annuler</button><button class="btn p" id="ok">Planifier</button>`,
+    mount: m => {
+      const calc = () => {
+        const days = $$('#rpJ input:checked', m).map(i => +i.value), st = +$('#rpS', m).value, out = [];
+        if (!days.length) return out;
+        let d = $('#rpD', m).value || today(), i = st;
+        while (i < P.seq.length) { if (days.includes((parse(d).getDay() + 6) % 7)) out.push([d, i++]); d = addDays(d, 1); }
+        return out;
+      };
+      const paint = () => { const o = calc(), n = $$('#rpJ input:checked', m).length; $('#rpI', m).innerHTML = o.length ? `→ <b>${o.length} séances</b> du ${fdateL(o[0][0])} au ${fdateL(o[o.length - 1][0])}${n < 4 || n > 6 ? ' · <span style="color:var(--warn)">⚠ hors recommandation (4 à 6 / semaine)</span>' : ''}` : 'Choisissez au moins un jour.'; };
+      $$('input,select', m).forEach(x => x.addEventListener('change', paint)); paint();
+      $('#ok', m).onclick = () => {
+        const o = calc(); if (!o.length) return;
+        const pid = $('#rpP', m).value, sid = uid(), ex = EX('ex_fractionne_cdc') ? 'ex_fractionne_cdc' : null;
+        o.forEach(([d, i]) => {
+          const x = P.seq[i];
+          const item = x[0] ? { exId: ex, series: x[0], reps: `${x[1]}' C / 1' M`, charge: '', repos: '', note: '5 min de marche avant et après' }
+            : { exId: (S.exercices.find(e => e.id === 'ex_footing_' + x[1]) || {}).id || ex, series: 1, reps: `${x[1]} min`, charge: '', repos: '', note: 'Course continue · 5 min de marche avant et après' };
+          S.seances.push({ id: uid(), serieId: sid, patientId: pid, date: d, titre: `Reprise course · S${i + 1}/${P.seq.length}`, lieu: 'domicile', duree: runDur(x), statut: 'prevue', rpe: '', ressenti: '',
+            notes: `${P.court} — ${runTxt(x)}. Si douleur > 3/10 pendant la course ou le lendemain : refaire la séance précédente ou répéter celle-ci.`, items: [item].filter(it => it.exId) });
+        });
+        if ($('#rpC', m).checked) S.cycles.push({ id: uid(), patientId: pid, nom: 'Reprise course à pied', objectif: P.desc, criteres: 'Courir 30 min en continu sans douleur (≤ 3/10) ni aggravation le lendemain', debut: o[0][0], fin: o[o.length - 1][0], couleur: '#0ea5b7' });
+        UI.pid = pid; save(); closeModal(); location.hash = 'calendrier'; render(); toast(`${o.length} séances de reprise course planifiées`);
+      };
+    } });
+}
+function exerciseModal(e, onCreate, onCancel, cat) {
+  const isNew = !e;
+  const d = e ? { ...e } : { id: uid(), nom: '', categorie: cat || 'Renforcement', consignes: '', series: 3, reps: '10', charge: '', repos: '60 s' };
+  modal({ title: isNew ? 'Nouvel exercice' : 'Modifier l\'exercice', body: `
+    <div class="fr"><div class="f" style="grid-column:span 2"><label>Nom</label><input id="xN" value="${esc(d.nom)}"></div>
+    <div class="f"><label>Catégorie</label><select id="xC">${CATS.map(c => `<option ${c === d.categorie ? 'selected' : ''}>${c}</option>`).join('')}</select></div></div>
+    <div class="f"><label>Consignes</label><textarea id="xI">${esc(d.consignes)}</textarea></div>
+    <div class="fr"><div class="f"><label>Séries</label><input id="xS" value="${esc(d.series)}"></div><div class="f"><label>Reps / durée</label><input id="xR" value="${esc(d.reps)}"></div>
+    <div class="f"><label>Charge</label><input id="xL" value="${esc(d.charge)}" placeholder="ex. 10 kg, élastique rouge"></div><div class="f"><label>Repos</label><input id="xP" value="${esc(d.repos)}"></div></div>`,
+    foot: `${!isNew ? '<button class="btn d" id="del">Supprimer</button>' : ''}<div class="sp"></div><button class="btn" id="cn">Annuler</button><button class="btn p" id="ok">Enregistrer</button>`,
+    mount: m => {
+      $('#xN', m).focus();
+      $('#cn', m).onclick = () => { closeModal(); if (onCancel) onCancel(); };
+      $('#ok', m).onclick = () => {
+        Object.assign(d, { nom: $('#xN', m).value.trim(), categorie: $('#xC', m).value, consignes: $('#xI', m).value.trim(), series: $('#xS', m).value, reps: $('#xR', m).value, charge: $('#xL', m).value, repos: $('#xP', m).value });
+        if (!d.nom) { $('#xN', m).style.borderColor = 'var(--bad)'; return; }
+        const i = S.exercices.findIndex(x => x.id === d.id); if (i >= 0) S.exercices[i] = d; else S.exercices.push(d);
+        save(); closeModal(); if (onCreate) onCreate(d); else render();
+      };
+      if (!isNew) $('#del', m).onclick = () => confirmBox('Supprimer cet exercice de la bibliothèque ?', () => { S.exercices = S.exercices.filter(x => x.id !== d.id); save(); render(); });
+    } });
+}
+
+/* ---------- Suivi ---------- */
+function renderSuivi(m) {
+  const p = P(UI.pid), t = today(), N = UI.suiviDays;
+  const from = addDays(t, -N + 1);
+  const qs = qOf(p.id).filter(q => q.date >= from && q.date <= t);
+  const ses = sesOf(p.id).filter(s => s.date >= from && s.date <= t);
+  const done = ses.filter(s => s.statut === 'faite').length;
+  const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+  const last7 = qOf(p.id).filter(q => q.date > addDays(t, -7)), prev7 = qOf(p.id).filter(q => q.date > addDays(t, -14) && q.date <= addDays(t, -7));
+  const d7 = avg(last7.map(q => q.douleur)), dp = avg(prev7.map(q => q.douleur));
+  const c7 = avg(last7.map(q => q.courbatures));
+  const allQ = qOf(p.id);
+  const answered = sesOf(p.id).filter(s => s.date < t && s.statut !== 'manquee');
+  const rate = answered.length ? Math.round(answered.filter(s => qForSes(s.id)).length / answered.length * 100) : null;
+  const trend = d7 != null && dp != null ? d7 - dp : null;
+  // Graphique SVG
+  const W = 900, H = 260, L = 34, R = 12, T = 14, B = 30, iw = W - L - R, ih = H - T - B;
+  const x = dd => L + diffDays(from, dd) / (N - 1) * iw, y = v => T + ih - v / 10 * ih;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">`;
+  [0, 2, 4, 6, 8, 10].forEach(v => svg += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#e8ecf3"/><text x="${L - 8}" y="${y(v) + 4}" font-size="11" text-anchor="end" fill="#6b7689">${v}</text>`);
+  svg += `<rect x="${L}" y="${y(10)}" width="${iw}" height="${y(6) - y(10)}" fill="#d64545" opacity=".04"/>`;
+  for (let i = 0; i < N; i += 7) { const dd = addDays(from, i); svg += `<text x="${x(dd)}" y="${H - 8}" font-size="11" text-anchor="middle" fill="#6b7689">${fdate(dd)}</text>`; }
+  ses.forEach(s => svg += `<rect x="${x(s.date) - 3}" y="${T + ih - 7}" width="6" height="7" rx="1.5" fill="${s.statut === 'faite' ? (s.lieu === 'domicile' ? '#2f6fdf' : s.lieu === 'bilan' ? '#8b5cf6' : '#d64545') : '#c5cddb'}"><title>${esc(s.titre)} – ${fdate(s.date)}</title></rect>`);
+  const line = (k, col) => { if (!qs.length) return ''; const pts = qs.map(q => `${x(q.date).toFixed(1)},${y(q[k]).toFixed(1)}`); return `<polyline points="${pts.join(' ')}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round"/>` + qs.map(q => `<circle cx="${x(q.date)}" cy="${y(q[k])}" r="4" fill="#fff" stroke="${col}" stroke-width="2"><title>${fdate(q.date)} : ${k} ${q[k]}/10</title></circle>`).join(''); };
+  svg += line('courbatures', '#e8900c') + line('douleur', '#d64545') + '</svg>';
+  const fmt = v => v == null ? '–' : v.toFixed(1);
+  m.innerHTML = patientHeader(`<div class="seg" id="per">${[[14, '2 sem.'], [42, '6 sem.'], [90, '3 mois']].map(([n, l]) => `<button data-n="${n}" class="${N === n ? 'on' : ''}">${l}</button>`).join('')}</div>`) + `
+    <div class="grid g4" style="margin-bottom:14px">
+      <div class="panel kpi"><div class="l">Assiduité</div><div class="v">${ses.length ? Math.round(done / ses.length * 100) + ' %' : '–'}</div><div class="d" style="color:var(--mut)">${done}/${ses.length} séances réalisées</div></div>
+      <div class="panel kpi"><div class="l">Douleur J+1 (7 j)</div><div class="v" style="color:${d7 == null ? 'inherit' : ['var(--ok)', 'var(--warn)', 'var(--bad)'][lvl(d7)]}">${fmt(d7)}</div><div class="d" style="color:${trend == null ? 'var(--mut)' : trend > 0 ? 'var(--bad)' : 'var(--ok)'}">${trend == null ? 'pas de comparaison' : (trend > 0 ? '▲ +' : '▼ ') + trend.toFixed(1) + ' vs semaine préc.'}</div></div>
+      <div class="panel kpi"><div class="l">Courbatures J+1 (7 j)</div><div class="v">${fmt(c7)}</div><div class="d" style="color:var(--mut)">sur 10</div></div>
+      <div class="panel kpi"><div class="l">Taux de réponse</div><div class="v">${rate == null ? '–' : rate + ' %'}</div><div class="d" style="color:var(--mut)">questionnaires J+1</div></div>
+    </div>
+    <div class="panel" style="margin-bottom:14px"><h2>Douleur et courbatures le lendemain des séances</h2>${svg}
+      <div class="legend"><span><i style="background:#d64545"></i>Douleur (EVA)</span><span><i style="background:#e8900c"></i>Courbatures</span><span><i style="background:#d64545"></i>Séance cabinet</span><span><i style="background:#2f6fdf"></i>Auto-exercice</span><span><i style="background:#c5cddb"></i>Non réalisée / prévue</span></div></div>
+    <div class="panel"><h2>Réponses du patient</h2>${allQ.length ? `<table><thead><tr><th>Date</th><th>Séance</th><th>Douleur</th><th>Courb.</th><th>Fatigue</th><th>Sommeil</th><th>Commentaire</th></tr></thead><tbody>
+      ${allQ.slice().reverse().map(q => { const s = S.seances.find(x => x.id === q.seanceId); return `<tr data-q="${q.id}" style="cursor:pointer"><td>${fdateL(q.date)}</td><td>${esc(s ? s.titre : '—')}</td>
+        <td><span class="pill lv${lvl(q.douleur)}">${q.douleur}</span></td><td><span class="pill lv${lvl(q.courbatures)}">${q.courbatures}</span></td><td>${q.fatigue ?? '–'}</td><td>${esc(q.sommeil || '')}${q.gonflement === 'oui' ? ' · gonflement' : ''}</td><td>${esc(q.commentaire || '')}</td></tr>`; }).join('')}
+      </tbody></table>` : '<div style="color:var(--mut)">Aucune réponse pour l\'instant.</div>'}</div>`;
+  $$('#per button').forEach(b => b.onclick = () => { UI.suiviDays = +b.dataset.n; render(); });
+  $$('tr[data-q]', m).forEach(r => r.onclick = () => questionnaireModal(S.questionnaires.find(q => q.id === r.dataset.q)));
+}
+
+/* ---------- Vue patient (aperçu mobile) ---------- */
+function renderPatient(m) {
+  const p = P(UI.pid), t = today();
+  const pend = pendingQuestionnaire(p.id);
+  const auto = sesOf(p.id).filter(s => s.lieu === 'domicile');
+  const todayS = auto.filter(s => s.date === t || (s.date < t && s.date >= addDays(t, -2) && s.statut === 'prevue')).sort((a, b) => b.date.localeCompare(a.date));
+  const next = auto.filter(s => s.date > t && s.date <= addDays(t, 7)).sort((a, b) => a.date.localeCompare(b.date));
+  const cy = cycleAt(p.id, t);
+  const qd = { douleur: 0, courbatures: 0, fatigue: 0 };
+  const sl = (k, l, lo, hi) => `<div class="sl"><div class="h"><span>${l}</span><b id="pv_${k}">0</b></div><input type="range" min="0" max="10" value="0" data-k="${k}"><div class="ends"><span>${lo}</span><span>${hi}</span></div></div>`;
+  let ph = `<div class="ptop"><div class="hi">Bonjour ${esc(p.prenom)} 👋</div><div class="sub">${fdateL(t)}</div></div>`;
+  if (pend) {
+    ph += `<div class="pcard" id="pq"><h3>Comment vous sentez-vous ?</h3><div class="k">Suite à votre séance « ${esc(pend.titre)} » du ${fdateL(pend.date)}</div>
+      ${sl('douleur', 'Douleur', 'Aucune', 'Maximale')}${sl('courbatures', 'Courbatures', 'Aucune', 'Très intenses')}${sl('fatigue', 'Fatigue', 'En forme', 'Épuisé')}
+      <div class="sl"><div class="h"><span>Sommeil</span></div><div class="seg" id="psm" style="margin-top:8px"><button data-v="bon" class="on">Bon</button><button data-v="moyen">Moyen</button><button data-v="mauvais">Mauvais</button></div></div>
+      <div class="sl"><div class="h"><span>Un commentaire ?</span></div><textarea id="pc" style="width:100%;margin-top:6px;border:1px solid var(--line);border-radius:9px;padding:8px;min-height:56px"></textarea></div>
+      <button class="pbtn" id="psend">Envoyer à mon kiné</button></div>`;
+  }
+  if (todayS.length) ph += `<div class="tm" id="tm"><div class="lab"><span>⏱ Minuteur</span><span id="tml">${TM.label || 'Chrono'}</span></div>
+    <div class="disp" id="tmd">${fmtT(tmValue())}</div>
+    <div class="row"><button class="go" id="tmgo">${TM.running ? '⏸ Pause' : '▶ Démarrer'}</button><button id="tmrs">↺</button></div>
+    <div class="row pre">${[[30, '30 s'], [45, '45 s'], [60, '1 min'], [90, '1 min 30'], [120, '2 min'], [0, 'Chrono']].map(([v, l]) => `<button data-pre="${v}">${l}</button>`).join('')}</div></div>`;
+  todayS.forEach(s => {
+    const k = UI.done[s.id] || (UI.done[s.id] = {});
+    const when = s.date === t ? "Aujourd'hui" : fdateL(s.date) + ' · à valider';
+    ph += `<div class="pcard"><h3>${s.statut === 'faite' ? '✅ ' : '🏠 '}${esc(s.titre)}</h3><div class="k">${when} · Auto-exercice${s.duree ? ' · ' + s.duree + ' min' : ''}</div>
+      ${s.notes ? `<div style="font-size:12.5px;margin-top:8px;background:var(--pri-l);padding:8px 10px;border-radius:9px">💬 ${esc(s.notes)}</div>` : ''}
+      <div style="margin-top:6px">${(s.items || []).map((it, i) => { const e = EX(it.exId) || { nom: '?', consignes: '' }; const work = parseSec(it.reps), rest = parseSec(it.repos), rs = runSeq(it);
+        return `<div class="pex"><input type="checkbox" data-sx="${s.id}" data-i="${i}" ${k[i] || s.statut === 'faite' ? 'checked' : ''}><div style="flex:1"><div class="n">${esc(e.nom)}</div><div class="c"><b>${esc(it.series)} × ${esc(it.reps)}</b>${it.charge ? ' · ' + esc(it.charge) : ''}${it.repos ? ' · repos ' + esc(it.repos) : ''}</div><div class="c">${esc(it.note || e.consignes)}</div></div>
+        <div style="display:flex;flex-direction:column;gap:4px">${rs ? `<button class="tbtn" data-seq="${s.id}:${i}">▶ Course / marche</button>` : ''}${work ? `<button class="tbtn" data-tm="${work}" data-tl="${esc(e.nom)} · effort">⏱ ${fmtT(work)}</button>` : ''}${rest ? `<button class="tbtn" data-tm="${rest}" data-tl="Repos · ${esc(e.nom)}">💤 ${fmtT(rest)}</button>` : ''}</div></div>`; }).join('')}</div>
+      ${s.statut === 'faite' ? `<div class="pdone">✅ Séance validée${s.douleurPatient != null ? ` · douleur <b>${s.douleurPatient}/10</b>` : ''}${s.commentairePatient ? `<br>💬 ${esc(s.commentairePatient)}` : ''}</div>` :
+      `<div class="pval"><div class="sl" style="margin-top:0"><div class="h"><span>Douleur pendant la séance</span><b id="pdv_${s.id}">0</b>/10</div><input type="range" min="0" max="10" value="0" data-pd="${s.id}"><div class="ends"><span>0 = aucune</span><span>10 = maximale</span></div></div>
+        <div class="sl"><div class="h"><span>Commentaire</span></div><textarea data-pc="${s.id}" placeholder="Comment s'est passée la séance ?"></textarea></div>
+        <button class="pbtn g" data-fin="${s.id}">✅ Valider ma séance</button></div>`}</div>`;
+  });
+  if (!pend && !todayS.length) ph += `<div class="pcard"><h3>Pas d'auto-exercice aujourd'hui 😌</h3><div class="k">Aucune séance ni questionnaire en attente.</div></div>`;
+  const nr = rdvOf(p.id).filter(r => r.date >= t).slice(0, 3);
+  if (nr.length) ph += `<div class="pcard"><h3>Vos prochains rendez-vous</h3>${nr.map(r => { const T = RDV_T[r.type] || RDV_T.autre; return `<div class="pup"><span>${T.i} ${esc(r.titre || T.l)}<br><span class="k" style="font-size:12px;color:var(--mut)">${fdateL(r.date)}${r.heure ? ' · ' + esc(r.heure) : ''}</span></span><span style="font-weight:700;color:${T.c}">${jx(r.date)[0]}</span></div>`; }).join('')}</div>`;
+  ph += `<div class="pcard"><h3>Mes prochains auto-exercices</h3>${next.length ? next.map(s => `<div class="pup"><span>${fdateL(s.date)}</span><span style="font-weight:600">${esc(s.titre)}</span></div>`).join('') : '<div class="k">Rien de prévu dans les 7 prochains jours.</div>'}</div><div style="height:16px"></div>`;
+  m.innerHTML = patientHeader() + `<div class="pv"><div class="phone"><div class="scr">${ph}</div></div>
+    <div class="note-box"><h3>Aperçu de l'écran patient</h3>
+    <p>Ce que ${esc(p.prenom)} voit sur son téléphone : uniquement <b>ses séances d'auto-exercice</b> (en bleu dans le calendrier), avec un <b>minuteur</b> (boutons ⏱ effort et 💤 repos sur chaque exercice), la <b>validation de la séance</b> avec sa douleur /10 et un commentaire, le <b>questionnaire du lendemain</b> et ses prochains rendez-vous. Les séances cabinet (en rouge) n'y apparaissent pas.</p>
+    <p>Ici, vous pouvez tester le parcours : les réponses et validations s'enregistrent réellement dans le dossier du patient et apparaissent dans le calendrier et l'onglet Suivi.</p>
+    <p style="color:var(--mut);font-size:12.5px">Alertes automatiques côté kiné : point rouge si douleur ≥ 6/10 ou courbatures ≥ 7/10, point orange si la douleur augmente de 2 points ou plus d'une réponse à l'autre.</p>
+    ${pend ? '' : `<p><button class="btn" id="simQ">Simuler : séance d'hier à renseigner</button></p>`}</div></div>`;
+  if (pend) {
+    const box = $('#pq');
+    $$('input[type=range]', box).forEach(r => r.oninput = () => { qd[r.dataset.k] = +r.value; $('#pv_' + r.dataset.k).textContent = r.value; });
+    let sm = 'bon'; $$('#psm button', box).forEach(b => b.onclick = () => { sm = b.dataset.v; $$('#psm button', box).forEach(x => x.classList.toggle('on', x === b)); });
+    $('#psend').onclick = () => {
+      S.questionnaires.push({ id: uid(), seanceId: pend.id, patientId: p.id, date: addDays(pend.date, 1) > t ? t : addDays(pend.date, 1), douleur: qd.douleur, courbatures: qd.courbatures, fatigue: qd.fatigue, sommeil: sm, gonflement: 'non', commentaire: $('#pc').value.trim(), rempliLe: t });
+      if (pend.statut === 'prevue') pend.statut = 'faite';
+      save(); render(); toast('Merci ! Réponse envoyée à votre kiné');
+    };
+  }
+  $$('[data-sx]', m).forEach(c => c.onchange = () => { UI.done[c.dataset.sx][c.dataset.i] = c.checked; });
+  $$('[data-pd]', m).forEach(r => r.oninput = () => { $('#pdv_' + r.dataset.pd).textContent = r.value; });
+  $$('[data-fin]', m).forEach(b => b.onclick = () => {
+    const s = S.seances.find(x => x.id === b.dataset.fin); s.statut = 'faite';
+    s.douleurPatient = +$(`[data-pd="${s.id}"]`).value; s.commentairePatient = $(`[data-pc="${s.id}"]`).value.trim(); s.valideLe = today();
+    const n = Object.values(UI.done[s.id] || {}).filter(Boolean).length; if (n && n < s.items.length) s.ressenti = `${n}/${s.items.length} exercices cochés`;
+    save(); render(); toast('Bravo, séance validée 💪');
+  });
+  // Minuteur
+  const go = $('#tmgo'); if (go) {
+    go.onclick = () => { tmToggle(); go.textContent = TM.running ? '⏸ Pause' : '▶ Démarrer'; };
+    $('#tmrs').onclick = () => { tmSet(TM.total, TM.label); };
+    $$('[data-pre]', m).forEach(b => b.onclick = () => { tmSet(+b.dataset.pre, +b.dataset.pre ? 'Compte à rebours' : 'Chrono'); });
+    $$('[data-seq]', m).forEach(b => b.onclick = () => { const [sid, i] = b.dataset.seq.split(':'); const s = S.seances.find(x => x.id === sid); const sq = s && runSeq(s.items[+i]); if (!sq) return; tmSeq(sq); tmToggle(); $('#tmgo').textContent = '⏸ Pause'; $('#tm').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
+    $$('[data-tm]', m).forEach(b => b.onclick = () => { tmSet(+b.dataset.tm, b.dataset.tl); tmToggle(); $('#tmgo').textContent = '⏸ Pause'; $('#tm').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
+  }
+  const sim = $('#simQ'); if (sim) sim.onclick = () => {
+    const y = addDays(t, -1);
+    let s = sesOf(p.id).find(x => x.date === y && !qForSes(x.id));
+    if (!s) { s = { id: uid(), patientId: p.id, date: y, titre: 'Séance test', lieu: 'cabinet', duree: 45, statut: 'faite', rpe: '', ressenti: '', notes: '', items: S.exercices.slice(0, 3).map(e => ({ exId: e.id, series: e.series, reps: e.reps, charge: e.charge, repos: e.repos, note: '' })) }; S.seances.push(s); }
+    save(); render();
+  };
+}
+
+/* ---------- Minuteur ---------- */
+const TM = { total: 0, base: 0, start: 0, running: false, label: 'Chrono', fired: false, int: null };
+const parseSec = s => { s = norm(s); if (/\d+\s*'\s*c\s*\/\s*\d+\s*'\s*m/.test(s)) return 0; let m = s.match(/(\d+)\s*(?:min|')(?:\s*(\d+))?/); if (m) return +m[1] * 60 + (+m[2] || 0); m = s.match(/(\d+)\s*(?:s\b|sec)/); return m ? +m[1] : 0; };
+const fmtT = v => { v = Math.max(0, Math.round(v)); return pad(Math.floor(v / 60)) + ':' + pad(v % 60); };
+const tmElapsed = () => TM.base + (TM.running ? (Date.now() - TM.start) / 1000 : 0);
+const tmValue = () => TM.total ? Math.max(0, TM.total - tmElapsed()) : tmElapsed();
+const runSeq = it => { const m = norm(it.reps).match(/(\d+)\s*'\s*c\s*\/\s*(\d+)\s*'\s*m/); if (!m) return null; const n = +it.series || 1, seq = [{ l: 'Marche (échauffement)', s: 300 }]; for (let i = 1; i <= n; i++) { seq.push({ l: `🏃 Course ${i}/${n}`, s: +m[1] * 60 }); seq.push({ l: `🚶 Marche ${i}/${n}`, s: +m[2] * 60 }); } seq.push({ l: 'Marche (retour au calme)', s: 300 }); return seq; };
+function tmSeq(seq) { TM.seq = seq; TM.idx = 0; tmSet(seq[0].s, seq[0].l, true); }
+function tmSet(total, label, keep) { if (!keep) TM.seq = null; TM.total = total; TM.base = 0; TM.running = false; TM.fired = false; TM.label = label || 'Chrono'; tmPaint(); const g = $('#tmgo'); if (g) g.textContent = '▶ Démarrer'; }
+function tmToggle() {
+  if (TM.running) { TM.base = tmElapsed(); TM.running = false; }
+  else { if (TM.total && tmValue() <= 0) { TM.base = 0; TM.fired = false; } TM.start = Date.now(); TM.running = true; }
+  clearInterval(TM.int); if (TM.running) TM.int = setInterval(tmTick, 250); tmPaint();
+}
+function tmTick() {
+  if (TM.total && tmValue() <= 0 && !TM.fired && TM.seq && TM.idx < TM.seq.length - 1) {
+    TM.idx++; const sg = TM.seq[TM.idx]; TM.total = sg.s; TM.base = 0; TM.start = Date.now(); TM.label = sg.l; beep(true);
+  }
+  if (TM.total && tmValue() <= 0 && !TM.fired) { TM.fired = true; TM.base = TM.total; TM.running = false; clearInterval(TM.int); beep(); const g = $('#tmgo'); if (g) g.textContent = '▶ Démarrer'; }
+  tmPaint();
+}
+function tmPaint() { const d = $('#tmd'); if (d) { d.textContent = fmtT(tmValue()); d.classList.toggle('end', !!TM.total && tmValue() <= 0); } const l = $('#tml'); if (l) l.textContent = TM.label; }
+function beep(short) {
+  try { const A = new (window.AudioContext || window.webkitAudioContext)(); (short ? [0, .25] : [0, .35, .7]).forEach(t0 => { const o = A.createOscillator(), g = A.createGain(); o.frequency.value = 880; o.connect(g); g.connect(A.destination); g.gain.setValueAtTime(.25, A.currentTime + t0); o.start(A.currentTime + t0); o.stop(A.currentTime + t0 + .2); }); } catch (e) {}
+  try { navigator.vibrate && navigator.vibrate(short ? [250, 100, 250] : [300, 120, 300, 120, 300]); } catch (e) {}
+  toast(short ? TM.label : '⏱ Temps écoulé !');
+}
+
+/* ---------- Données d'exemple (fictives) ---------- */
+function loadDemo() {
+  const t = today(), m0 = mondayOf(t);
+  const exId = n => (S.exercices.find(e => e.nom.startsWith(n)) || S.exercices[0]).id;
+  const mk = (nom, prenom, pathologie, objectif, couleur) => { const p = { id: uid(), nom, prenom, pathologie, objectif, debut: addDays(m0, -21), tel: '', notes: 'Patient fictif de démonstration', couleur }; S.patients.push(p); return p; };
+  const a = mk('Martin', 'Lucas', 'Tendinopathie rotulienne droite (démo)', 'Reprise du trail sans douleur', AVC[0]);
+  const b = mk('Bernard', 'Sarah', 'Entorse cheville gauche (démo)', 'Retour au handball', AVC[2]);
+  const cyc = (p, list) => { let d = addDays(m0, -21); list.forEach(([nom, objectif, criteres, len], i) => { S.cycles.push({ id: uid(), patientId: p.id, nom, objectif, criteres, debut: d, fin: addDays(d, len - 1), couleur: COLORS[i] }); d = addDays(d, len); }); };
+  cyc(a, CYCLE_TPL['Tendinopathie (3 phases, 12 sem.)']);
+  cyc(b, CYCLE_TPL['Post-entorse cheville (3 phases, 6 sem.)']);
+  const plan = (p, days, fn) => {
+    for (let i = -21; i < 21; i++) {
+      const dd = addDays(m0, i); if (!days.includes((parse(dd).getDay() + 6) % 7)) continue;
+      const cy = cycleAt(p.id, dd); const [titre, lieu, exs] = fn(cy ? cycOf(p.id).indexOf(cy) : 0, i);
+      const s = { id: uid(), patientId: p.id, date: dd, titre, lieu, duree: lieu === 'domicile' ? 30 : 45, statut: dd < t ? 'faite' : 'prevue', rpe: dd < t ? String(5 + (i % 3)) : '', ressenti: '', notes: lieu === 'domicile' ? 'Douleur tolérée ≤ 3/10 pendant l\'exercice.' : '', items: exs.map(n => { const e = EX(exId(n)); return { exId: e.id, series: e.series, reps: e.reps, charge: e.charge, repos: e.repos, note: '' }; }) };
+      if (lieu === 'domicile' && dd < t) { s.douleurPatient = Math.max(0, 4 - Math.floor((i + 21) / 7)); s.commentairePatient = i % 4 === 0 ? 'RAS, séance bien passée' : ''; }
+      S.seances.push(s);
+    }
+  };
+  plan(a, [0, 2, 4], (c, i) => c === 0 ? [(i % 2 ? 'Isométrie quadriceps' : 'Gestion de charge'), (i % 2 ? 'cabinet' : 'domicile'), ['Spanish squat', 'Leg extension', 'Pont fessier', 'Gainage ventral']]
+    : ['Renforcement lourd', i % 2 ? 'cabinet' : 'domicile', ['Step-down', 'Squat poids', 'Fente avant', 'Mollets excentriques', 'Gainage latéral']]);
+  plan(b, [1, 3, 5], c => c === 0 ? ['Mobilité & appui', 'cabinet', ['Mobilité cheville', 'Équilibre unipodal', 'Vélo']] : c === 1 ? ['Proprioception', 'domicile', ['Équilibre unipodal', 'Star excursion', 'Mollets excentriques', 'Clamshell']] : ['Retour au sport', 'cabinet', ['Sauts pogo', 'Sauts latéraux', 'Course à pied']]);
+  const painA = [5, 5, 6, 4, 4, 5, 4, 3, 4, 3, 3, 2, 3, 2, 2], painB = [4, 3, 3, 3, 2, 2, 3, 2, 1, 2, 1, 1, 1, 1, 1];
+  [[a, painA], [b, painB]].forEach(([p, arr]) => {
+    sesOf(p.id).filter(s => s.date < addDays(t, -1)).sort((x, y) => x.date.localeCompare(y.date)).forEach((s, k) => {
+      const dv = arr[k % arr.length];
+      S.questionnaires.push({ id: uid(), seanceId: s.id, patientId: p.id, date: addDays(s.date, 1), douleur: dv, courbatures: Math.min(10, dv + 1 + (k % 2)), fatigue: 3 + (k % 3), sommeil: k % 4 ? 'bon' : 'moyen', gonflement: 'non', commentaire: k === 2 ? 'Gêne en descendant les escaliers' : '' });
+    });
+  });
+  S.rdv = S.rdv || [];
+  S.rdv.push({ id: uid(), patientId: a.id, type: 'test', titre: 'Test isocinétique genoux', date: addDays(t, 10), heure: '10:00', lieu: 'Cabinet', notes: 'Évaluer le ratio IJ/Q avant la phase de pliométrie', resultat: '' });
+  S.rdv.push({ id: uid(), patientId: a.id, type: 'medecin', titre: 'Consultation médecin du sport', date: addDays(t, 24), heure: '', lieu: '', notes: '', resultat: '' });
+  S.rdv.push({ id: uid(), patientId: b.id, type: 'imagerie', titre: 'Radio cheville de contrôle', date: addDays(t, 5), heure: '14:30', lieu: '', notes: '', resultat: '' });
+  UI.pid = a.id; save(); render(); toast('Exemple chargé : 2 patients fictifs');
+}
+
+/* ---------- Navigation ---------- */
+function route() {
+  const h = location.hash.replace('#', '');
+  UI.view = ['calendrier', 'exercices', 'suivi', 'patient'].includes(h) ? h : 'calendrier';
+  render();
+}
+window.addEventListener('hashchange', route);
+$('#addP').onclick = () => patientModal();
+$('#q').oninput = e => { UI.pq = e.target.value; renderSide(); };
+const h0 = location.hash.replace('#', '');
+if (['calendrier', 'exercices', 'suivi', 'patient'].includes(h0)) UI.view = h0;
+initStore();
+</script>
+</body>
+</html>
